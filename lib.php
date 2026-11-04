@@ -93,3 +93,42 @@ function rollcall_delete_instance($id): bool {
     $DB->delete_records('rollcall', ['id' => $id]);
     return true;
 }
+
+/**
+ * Adds the roll elements to the course reset form.
+ *
+ * @param MoodleQuickForm $mform
+ */
+function rollcall_reset_course_form_definition(&$mform) {
+    $mform->addElement('header', 'rollcallheader', get_string('modulenameplural', 'mod_rollcall'));
+    $mform->addElement('advcheckbox', 'reset_rollcall_classifications', get_string('resetclassifications', 'mod_rollcall'));
+}
+
+/**
+ * Default values of the roll elements in the course reset form.
+ *
+ * @param stdClass $course
+ * @return array
+ */
+function rollcall_reset_course_form_defaults($course) {
+    return ['reset_rollcall_classifications' => 1];
+}
+
+/**
+ * Deletes the course classifications when requested by the course reset.
+ *
+ * @param stdClass $data The reset form data
+ * @return array Status array
+ */
+function rollcall_reset_userdata($data) {
+    $status = [];
+    if (!empty($data->reset_rollcall_classifications)) {
+        \mod_rollcall\local\classification::delete_for_course((int)$data->courseid);
+        $status[] = [
+            'component' => get_string('modulenameplural', 'mod_rollcall'),
+            'item' => get_string('resetclassifications', 'mod_rollcall'),
+            'error' => false,
+        ];
+    }
+    return $status;
+}
