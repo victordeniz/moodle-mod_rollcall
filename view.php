@@ -52,6 +52,10 @@ $groupid = (int)groups_get_activity_group($cm, true);
 // In separate groups, a user without access to all groups and without groups of their own sees nobody.
 $nogroup = $groupmode == SEPARATEGROUPS && $groupid === 0 && !has_capability('moodle/site:accessallgroups', $context);
 
+if ($canclassify && !$nogroup) {
+    $PAGE->requires->js_call_amd('mod_rollcall/classify', 'init', [$cm->id]);
+}
+
 echo $OUTPUT->header();
 groups_print_activity_menu($cm, $url);
 if ($nogroup) {
