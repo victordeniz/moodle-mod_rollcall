@@ -37,4 +37,28 @@ class mod_rollcall_generator extends testing_module_generator {
         }
         return parent::create_instance($record, (array)$options);
     }
+
+    /** @var int Number of categories created by this generator. */
+    protected int $categorycount = 0;
+
+    /**
+     * Creates a category in the catalogue.
+     *
+     * @param array $record Optional name and color
+     * @return \mod_rollcall\persistent\category
+     */
+    public function create_category(array $record = []): \mod_rollcall\persistent\category {
+        $this->categorycount++;
+        $name = $record['name'] ?? 'Category ' . $this->categorycount;
+        $color = $record['color'] ?? 'slate';
+        return \mod_rollcall\local\category_manager::create($name, $color);
+    }
+
+    /**
+     * Resets the generator counters.
+     */
+    public function reset() {
+        $this->categorycount = 0;
+        parent::reset();
+    }
 }

@@ -24,6 +24,22 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['categoryinuse'] = 'Esta categoría está asignada a alumnos; ocúltala en lugar de borrarla.';
+$string['color_amber'] = 'Ámbar';
+$string['color_blue'] = 'Azul';
+$string['color_green'] = 'Verde';
+$string['color_pink'] = 'Rosa';
+$string['color_purple'] = 'Violeta';
+$string['color_red'] = 'Rojo';
+$string['color_slate'] = 'Gris pizarra';
+$string['color_teal'] = 'Verde azulado';
+$string['defaultcat_erasmus'] = 'Erasmus';
+$string['defaultcat_repeater'] = 'Repetidor';
+$string['eventcategorycreated'] = 'Categoría de alumno creada';
+$string['eventcategorydeleted'] = 'Categoría de alumno borrada';
+$string['eventcategoryupdated'] = 'Categoría de alumno modificada';
+$string['invalidcategory'] = 'Categoría no válida.';
+$string['invalidcolor'] = 'El color no está en la paleta.';
 $string['modulename'] = 'Lista de clase';
 $string['modulename_help'] = 'La actividad Lista de clase muestra los alumnos del curso y permite al profesorado clasificarlos en categorías (por ejemplo, repetidor o Erasmus), cada una con su propio color.';
 $string['modulenameplural'] = 'Listas de clase';

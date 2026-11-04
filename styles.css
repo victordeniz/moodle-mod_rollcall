@@ -1,0 +1,105 @@
+/* Category palette. Keep in sync with \mod_rollcall\local\palette::COLORS. */
+
+.mod_rollcall-row-amber td {
+    background-color: #fef3c7;
+}
+
+.mod_rollcall-row-amber td:first-child {
+    box-shadow: inset 4px 0 #b45309;
+}
+
+.mod_rollcall-badge-amber {
+    background-color: #b45309;
+    color: #fff;
+}
+
+.mod_rollcall-row-blue td {
+    background-color: #dbeafe;
+}
+
+.mod_rollcall-row-blue td:first-child {
+    box-shadow: inset 4px 0 #1d4ed8;
+}
+
+.mod_rollcall-badge-blue {
+    background-color: #1d4ed8;
+    color: #fff;
+}
+
+.mod_rollcall-row-green td {
+    background-color: #dcfce7;
+}
+
+.mod_rollcall-row-green td:first-child {
+    box-shadow: inset 4px 0 #15803d;
+}
+
+.mod_rollcall-badge-green {
+    background-color: #15803d;
+    color: #fff;
+}
+
+.mod_rollcall-row-purple td {
+    background-color: #f3e8ff;
+}
+
+.mod_rollcall-row-purple td:first-child {
+    box-shadow: inset 4px 0 #7e22ce;
+}
+
+.mod_rollcall-badge-purple {
+    background-color: #7e22ce;
+    color: #fff;
+}
+
+.mod_rollcall-row-red td {
+    background-color: #fee2e2;
+}
+
+.mod_rollcall-row-red td:first-child {
+    box-shadow: inset 4px 0 #b91c1c;
+}
+
+.mod_rollcall-badge-red {
+    background-color: #b91c1c;
+    color: #fff;
+}
+
+.mod_rollcall-row-teal td {
+    background-color: #ccfbf1;
+}
+
+.mod_rollcall-row-teal td:first-child {
+    box-shadow: inset 4px 0 #0f766e;
+}
+
+.mod_rollcall-badge-teal {
+    background-color: #0f766e;
+    color: #fff;
+}
+
+.mod_rollcall-row-pink td {
+    background-color: #fce7f3;
+}
+
+.mod_rollcall-row-pink td:first-child {
+    box-shadow: inset 4px 0 #be185d;
+}
+
+.mod_rollcall-badge-pink {
+    background-color: #be185d;
+    color: #fff;
+}
+
+.mod_rollcall-row-slate td {
+    background-color: #f1f5f9;
+}
+
+.mod_rollcall-row-slate td:first-child {
+    box-shadow: inset 4px 0 #475569;
+}
+
+.mod_rollcall-badge-slate {
+    background-color: #475569;
+    color: #fff;
+}

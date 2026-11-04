@@ -24,6 +24,22 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['categoryinuse'] = 'This category is assigned to students; hide it instead of deleting it.';
+$string['color_amber'] = 'Amber';
+$string['color_blue'] = 'Blue';
+$string['color_green'] = 'Green';
+$string['color_pink'] = 'Pink';
+$string['color_purple'] = 'Purple';
+$string['color_red'] = 'Red';
+$string['color_slate'] = 'Slate';
+$string['color_teal'] = 'Teal';
+$string['defaultcat_erasmus'] = 'Erasmus';
+$string['defaultcat_repeater'] = 'Repeater';
+$string['eventcategorycreated'] = 'Student category created';
+$string['eventcategorydeleted'] = 'Student category deleted';
+$string['eventcategoryupdated'] = 'Student category updated';
+$string['invalidcategory'] = 'Invalid category.';
+$string['invalidcolor'] = 'The colour is not in the palette.';
 $string['modulename'] = 'Roll call';
 $string['modulename_help'] = 'The Roll call activity lists the students of the course and lets teachers classify them into categories (for example repeater or Erasmus), each shown with its own colour.';
 $string['modulenameplural'] = 'Roll calls';
