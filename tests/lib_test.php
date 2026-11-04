@@ -57,6 +57,21 @@ final class lib_test extends \advanced_testcase {
     }
 
     /**
+     * Students do not see the activity; teachers do (core hides modules without mod/rollcall:view).
+     */
+    public function test_cm_hidden_for_students(): void {
+        $this->resetAfterTest();
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course();
+        $roll = $gen->create_module('rollcall', ['course' => $course->id]);
+        $student = $gen->create_and_enrol($course, 'student');
+        $teacher = $gen->create_and_enrol($course, 'teacher');
+
+        $this->assertFalse(get_fast_modinfo($course, $student->id)->get_cm($roll->cmid)->uservisible);
+        $this->assertTrue(get_fast_modinfo($course, $teacher->id)->get_cm($roll->cmid)->uservisible);
+    }
+
+    /**
      * The module declares the expected features.
      */
     public function test_supports(): void {

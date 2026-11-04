@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * List of roll instances in a course (placeholder, completed in a later task).
+ * List of rolls in a course: redirects to the course activity overview, as core modules do since Moodle 5.0.
  *
  * @package    mod_rollcall
  * @copyright  2026 Victor Deniz <fitodeniz@gmail.com>
@@ -24,13 +24,6 @@
 
 require(__DIR__ . '/../../config.php');
 
-$id = required_param('id', PARAM_INT);
-$course = get_course($id);
-require_login($course);
+$courseid = required_param('id', PARAM_INT);
 
-$PAGE->set_url('/mod/rollcall/index.php', ['id' => $id]);
-$PAGE->set_title(get_string('modulenameplural', 'mod_rollcall'));
-$PAGE->set_heading($course->fullname);
-
-echo $OUTPUT->header();
-echo $OUTPUT->footer();
+\core_courseformat\activityoverviewbase::redirect_to_overview_page($courseid, 'rollcall');

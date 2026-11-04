@@ -24,6 +24,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['apply'] = 'Aplicar';
+$string['category'] = 'Categoría';
+$string['categoryfor'] = 'Categoría de {$a}';
 $string['categoryinuse'] = 'Esta categoría está asignada a alumnos; ocúltala en lugar de borrarla.';
 $string['color_amber'] = 'Ámbar';
 $string['color_blue'] = 'Azul';
@@ -38,12 +41,18 @@ $string['defaultcat_repeater'] = 'Repetidor';
 $string['eventcategorycreated'] = 'Categoría de alumno creada';
 $string['eventcategorydeleted'] = 'Categoría de alumno borrada';
 $string['eventcategoryupdated'] = 'Categoría de alumno modificada';
+$string['eventcoursemoduleviewed'] = 'Lista consultada';
 $string['eventusercategoryupdated'] = 'Categoría de alumno cambiada';
+$string['filter'] = 'Mostrar';
+$string['filterall'] = 'Todos los alumnos';
 $string['invalidcategory'] = 'Categoría no válida.';
 $string['invalidcolor'] = 'El color no está en la paleta.';
+$string['legend'] = 'Alumnos por categoría';
 $string['modulename'] = 'Lista de clase';
 $string['modulename_help'] = 'La actividad Lista de clase muestra los alumnos del curso y permite al profesorado clasificarlos en categorías (por ejemplo, repetidor o Erasmus), cada una con su propio color.';
 $string['modulenameplural'] = 'Listas de clase';
+$string['nostudents'] = 'No hay alumnos que mostrar.';
+$string['notingroup'] = 'No perteneces a ningún grupo, así que no hay alumnos que mostrar.';
 $string['pluginadministration'] = 'Administración de Lista de clase';
 $string['pluginname'] = 'Lista de clase';
 $string['privacy:metadata:rollcall_category'] = 'Catálogo de categorías de alumno de todo el sitio.';
@@ -55,9 +64,14 @@ $string['privacy:metadata:rollcall_usercat:timemodified'] = 'Cuándo se modific�
 $string['privacy:metadata:rollcall_usercat:userid'] = 'El alumno clasificado.';
 $string['privacy:metadata:rollcall_usercat:usermodified'] = 'El usuario que clasificó al alumno.';
 $string['privacy:path'] = 'Clasificación de alumnos';
+$string['regular'] = 'Regular';
 $string['resetclassifications'] = 'Borrar las clasificaciones de alumnos';
+$string['selectall'] = 'Seleccionar a todos los alumnos';
+$string['selectuser'] = 'Seleccionar a {$a}';
+$string['student'] = 'Alumno';
 $string['rollcall:addinstance'] = 'Añadir una nueva Lista de clase';
 $string['rollcall:belisted'] = 'Aparecer como alumno en la lista';
 $string['rollcall:classify'] = 'Clasificar alumnos';
 $string['rollcall:view'] = 'Ver la lista';
 $string['usernotlisted'] = 'El usuario no es un alumno de esta lista.';
+$string['withselected'] = 'Con los alumnos seleccionados:';

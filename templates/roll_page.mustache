@@ -1,0 +1,152 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_rollcall/roll_page
+
+    The roll: students of the course with their category.
+
+    Classes required for JS:
+    * none (the JS uses the data-region and data-action attributes)
+
+    Context variables required for this template:
+    * cmid - course module id
+    * groupid - selected group, 0 for all
+    * viewurl - URL of view.php
+    * canclassify - whether the classification controls are shown
+    * legend - list of {id, name, color, count}
+    * categories - list of {id, name, color} for the bulk select, regular (id 0) first
+    * filters - list of {value, name, selected}
+    * rows - list of {userid, fullname, picture, categoryid, categoryname, color, hascategory, options}
+    * empty - whether there are no rows
+
+    Example context (json):
+    {
+        "cmid": 6,
+        "groupid": 0,
+        "viewurl": "https://example.com/mod/rollcall/view.php",
+        "canclassify": true,
+        "legend": [
+            {"id": 1, "name": "Repeater", "color": "amber", "count": 1},
+            {"id": 0, "name": "Regular", "color": "", "count": 1}
+        ],
+        "categories": [
+            {"id": 0, "name": "Regular", "color": ""},
+            {"id": 1, "name": "Repeater", "color": "amber"}
+        ],
+        "filters": [
+            {"value": "all", "name": "All students", "selected": true},
+            {"value": "regular", "name": "Regular", "selected": false},
+            {"value": "1", "name": "Repeater", "selected": false}
+        ],
+        "rows": [
+            {"userid": 3, "fullname": "Ana Álvarez", "picture": "", "categoryid": 1, "categoryname": "Repeater",
+             "color": "amber", "hascategory": true,
+             "options": [{"id": 0, "name": "Regular", "color": "", "selected": false},
+                         {"id": 1, "name": "Repeater", "color": "amber", "selected": true}]},
+            {"userid": 4, "fullname": "Luis Benítez", "picture": "", "categoryid": 0, "categoryname": "Regular",
+             "color": "", "hascategory": false,
+             "options": [{"id": 0, "name": "Regular", "color": "", "selected": true},
+                         {"id": 1, "name": "Repeater", "color": "amber", "selected": false}]}
+        ],
+        "empty": false
+    }
+}}
+<div class="mod_rollcall-roll" data-region="mod_rollcall-root" data-cmid="{{cmid}}">
+    <h3 class="h5 visually-hidden" id="mod_rollcall-legend-{{uniqid}}">{{#str}}legend, mod_rollcall{{/str}}</h3>
+    <ul class="mod_rollcall-legend list-inline mb-3" data-region="legend" aria-labelledby="mod_rollcall-legend-{{uniqid}}">
+        {{#legend}}
+        <li class="list-inline-item me-3" data-categoryid="{{id}}">
+            {{#color}}<span class="badge mod_rollcall-badge-{{color}}">{{name}}</span>{{/color}}
+            {{^color}}<span class="badge bg-light text-dark border">{{name}}</span>{{/color}}
+            <span data-region="count">{{count}}</span>
+        </li>
+        {{/legend}}
+    </ul>
+
+    <form method="get" action="{{viewurl}}" class="d-flex flex-wrap gap-2 align-items-center mb-3">
+        <input type="hidden" name="id" value="{{cmid}}">
+        <input type="hidden" name="group" value="{{groupid}}">
+        <label for="mod_rollcall-filter-{{uniqid}}" class="mb-0">{{#str}}filter, mod_rollcall{{/str}}</label>
+        <select id="mod_rollcall-filter-{{uniqid}}" name="filter" class="form-select w-auto">
+            {{#filters}}
+            <option value="{{value}}"{{#selected}} selected{{/selected}}>{{name}}</option>
+            {{/filters}}
+        </select>
+        <button type="submit" class="btn btn-secondary">{{#str}}apply, mod_rollcall{{/str}}</button>
+    </form>
+
+    {{#empty}}
+    <p class="alert alert-info">{{#str}}nostudents, mod_rollcall{{/str}}</p>
+    {{/empty}}
+    {{^empty}}
+    <table class="table generaltable mod_rollcall-table" data-region="mod_rollcall-roll">
+        <thead>
+            <tr>
+                {{#canclassify}}
+                <th scope="col" class="mod_rollcall-select">
+                    <input type="checkbox" class="form-check-input" data-action="selectall"
+                        aria-label="{{#str}}selectall, mod_rollcall{{/str}}">
+                </th>
+                {{/canclassify}}
+                <th scope="col">{{#str}}student, mod_rollcall{{/str}}</th>
+                <th scope="col">{{#str}}category, mod_rollcall{{/str}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#rows}}
+            <tr data-userid="{{userid}}" data-categoryid="{{categoryid}}"{{#color}} class="mod_rollcall-row-{{color}}"{{/color}}>
+                {{#canclassify}}
+                <td class="mod_rollcall-select">
+                    <input type="checkbox" class="form-check-input" data-action="select" value="{{userid}}"
+                        aria-label="{{#str}}selectuser, mod_rollcall, {{fullname}}{{/str}}">
+                </td>
+                {{/canclassify}}
+                <td>
+                    {{{picture}}}
+                    <span class="mod_rollcall-fullname">{{fullname}}</span>
+                    <span class="badge ms-2{{#color}} mod_rollcall-badge-{{color}}{{/color}}{{^hascategory}} d-none{{/hascategory}}"
+                        data-region="badge">{{categoryname}}</span>
+                </td>
+                <td>
+                    {{#canclassify}}
+                    <select class="form-select form-select-sm w-auto" data-action="setcategory"
+                        aria-label="{{#str}}categoryfor, mod_rollcall, {{fullname}}{{/str}}">
+                        {{#options}}
+                        <option value="{{id}}" data-color="{{color}}"{{#selected}} selected{{/selected}}>{{name}}</option>
+                        {{/options}}
+                    </select>
+                    {{/canclassify}}
+                    {{^canclassify}}{{categoryname}}{{/canclassify}}
+                </td>
+            </tr>
+            {{/rows}}
+        </tbody>
+    </table>
+
+    {{#canclassify}}
+    <div class="d-flex flex-wrap gap-2 align-items-center" data-region="bulk">
+        <label for="mod_rollcall-bulk-{{uniqid}}" class="mb-0">{{#str}}withselected, mod_rollcall{{/str}}</label>
+        <select id="mod_rollcall-bulk-{{uniqid}}" class="form-select w-auto" data-region="bulkcategory">
+            {{#categories}}
+            <option value="{{id}}" data-color="{{color}}">{{name}}</option>
+            {{/categories}}
+        </select>
+        <button type="button" class="btn btn-primary" data-action="bulkapply">{{#str}}apply, mod_rollcall{{/str}}</button>
+    </div>
+    {{/canclassify}}
+    {{/empty}}
+</div>

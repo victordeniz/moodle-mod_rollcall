@@ -24,6 +24,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['apply'] = 'Apply';
+$string['category'] = 'Category';
+$string['categoryfor'] = 'Category for {$a}';
 $string['categoryinuse'] = 'This category is assigned to students; hide it instead of deleting it.';
 $string['color_amber'] = 'Amber';
 $string['color_blue'] = 'Blue';
@@ -38,12 +41,18 @@ $string['defaultcat_repeater'] = 'Repeater';
 $string['eventcategorycreated'] = 'Student category created';
 $string['eventcategorydeleted'] = 'Student category deleted';
 $string['eventcategoryupdated'] = 'Student category updated';
+$string['eventcoursemoduleviewed'] = 'Roll viewed';
 $string['eventusercategoryupdated'] = 'Student category changed';
+$string['filter'] = 'Show';
+$string['filterall'] = 'All students';
 $string['invalidcategory'] = 'Invalid category.';
 $string['invalidcolor'] = 'The colour is not in the palette.';
+$string['legend'] = 'Students per category';
 $string['modulename'] = 'Roll call';
 $string['modulename_help'] = 'The Roll call activity lists the students of the course and lets teachers classify them into categories (for example repeater or Erasmus), each shown with its own colour.';
 $string['modulenameplural'] = 'Roll calls';
+$string['nostudents'] = 'There are no students to show.';
+$string['notingroup'] = 'You are not a member of any group, so there are no students to show.';
 $string['pluginadministration'] = 'Roll call administration';
 $string['pluginname'] = 'Roll call';
 $string['privacy:metadata:rollcall_category'] = 'Site-wide catalogue of student categories.';
@@ -55,9 +64,14 @@ $string['privacy:metadata:rollcall_usercat:timemodified'] = 'When the classifica
 $string['privacy:metadata:rollcall_usercat:userid'] = 'The classified student.';
 $string['privacy:metadata:rollcall_usercat:usermodified'] = 'The user who classified the student.';
 $string['privacy:path'] = 'Student classification';
+$string['regular'] = 'Regular';
 $string['resetclassifications'] = 'Delete student classifications';
+$string['selectall'] = 'Select all students';
+$string['selectuser'] = 'Select {$a}';
+$string['student'] = 'Student';
 $string['rollcall:addinstance'] = 'Add a new Roll call';
 $string['rollcall:belisted'] = 'Be listed as a student in the roll';
 $string['rollcall:classify'] = 'Classify students';
 $string['rollcall:view'] = 'View the roll';
 $string['usernotlisted'] = 'The user is not a student listed in this roll.';
+$string['withselected'] = 'With selected students:';
