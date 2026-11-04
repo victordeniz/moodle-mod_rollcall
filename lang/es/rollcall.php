@@ -60,3 +60,4 @@ $string['rollcall:addinstance'] = 'Añadir una nueva Lista de clase';
 $string['rollcall:belisted'] = 'Aparecer como alumno en la lista';
 $string['rollcall:classify'] = 'Clasificar alumnos';
 $string['rollcall:view'] = 'Ver la lista';
+$string['usernotlisted'] = 'El usuario no es un alumno de esta lista.';

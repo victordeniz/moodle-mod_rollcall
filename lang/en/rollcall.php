@@ -60,3 +60,4 @@ $string['rollcall:addinstance'] = 'Add a new Roll call';
 $string['rollcall:belisted'] = 'Be listed as a student in the roll';
 $string['rollcall:classify'] = 'Classify students';
 $string['rollcall:view'] = 'View the roll';
+$string['usernotlisted'] = 'The user is not a student listed in this roll.';
