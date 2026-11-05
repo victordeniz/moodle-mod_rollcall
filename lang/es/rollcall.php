@@ -82,6 +82,7 @@ $string['rollcall:view'] = 'Ver la lista';
 $string['saved'] = 'Guardado';
 $string['selectall'] = 'Seleccionar a todos los alumnos';
 $string['selectuser'] = 'Seleccionar a {$a}';
+$string['statusnameexists'] = 'Ya existe un estado con este nombre en esta lista.';
 $string['student'] = 'Alumno';
 $string['studentsclassified'] = 'Alumnos clasificados';
 $string['usernotlisted'] = 'El usuario no es un alumno de esta lista.';

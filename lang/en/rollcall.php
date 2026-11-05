@@ -82,6 +82,7 @@ $string['rollcall:view'] = 'View the roll';
 $string['saved'] = 'Saved';
 $string['selectall'] = 'Select all students';
 $string['selectuser'] = 'Select {$a}';
+$string['statusnameexists'] = 'A status with this name already exists in this roll.';
 $string['student'] = 'Student';
 $string['studentsclassified'] = 'Students classified';
 $string['usernotlisted'] = 'The user is not a student listed in this roll.';
