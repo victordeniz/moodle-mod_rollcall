@@ -16,6 +16,10 @@
 
 namespace mod_rollcall;
 
+use mod_rollcall\event\status_created;
+use mod_rollcall\event\status_deleted;
+use mod_rollcall\event\status_updated;
+use mod_rollcall\local\status_manager;
 use mod_rollcall\persistent\status;
 
 /**
@@ -26,6 +30,7 @@ use mod_rollcall\persistent\status;
  * @copyright  2026 Victor Deniz <fitodeniz@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(status_manager::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(status::class)]
 final class status_manager_test extends \advanced_testcase {
     /**
@@ -77,5 +82,94 @@ final class status_manager_test extends \advanced_testcase {
         // The same name in another activity: allowed.
         $other = $this->new_status($second, 'Excused')->create();
         $this->assertGreaterThan(0, (int)$other->get('id'));
+    }
+
+    /**
+     * Creates a roll with no statuses and returns its instance id and module context.
+     *
+     * @return array [int instance id, \context_module]
+     */
+    private function create_empty_roll(): array {
+        global $DB;
+        $course = $this->getDataGenerator()->create_course();
+        $roll = $this->getDataGenerator()->create_module('rollcall', ['course' => $course->id]);
+        $DB->delete_records('rollcall_status', ['rollcallid' => $roll->id]);
+        return [(int)$roll->id, \context_module::instance($roll->cmid)];
+    }
+
+    /**
+     * Returns the names of the statuses of a roll, in order.
+     *
+     * @param int $rollcallid
+     * @return string[]
+     */
+    private function names(int $rollcallid): array {
+        return array_values(array_map(fn(status $s) => $s->get('name'), status_manager::get_all($rollcallid)));
+    }
+
+    public function test_manager_crud_order_and_events(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        [$id, $context] = $this->create_empty_roll();
+
+        $sink = $this->redirectEvents();
+        $a = status_manager::create($id, 'A', $context);
+        $b = status_manager::create($id, 'B', $context);
+        $c = status_manager::create($id, 'C');
+        $events = $sink->get_events();
+        $this->assertCount(2, $events, 'Creating without a context triggers no event.');
+        $this->assertInstanceOf(status_created::class, $events[0]);
+        $this->assertEquals($a->get('id'), $events[0]->objectid);
+        $this->assertSame([0, 1, 2], array_values(array_map(fn(status $s) => (int)$s->get('sortorder'),
+            status_manager::get_all($id))));
+
+        status_manager::update((int)$a->get('id'), 'A2', $context);
+        $this->assertInstanceOf(status_updated::class, $sink->get_events()[2]);
+        $this->assertSame(['A2', 'B', 'C'], $this->names($id));
+
+        status_manager::move((int)$c->get('id'), -1, $context);
+        $this->assertSame(['A2', 'C', 'B'], $this->names($id));
+        status_manager::move((int)$a->get('id'), -1, $context);
+        status_manager::move((int)$b->get('id'), 1, $context);
+        $this->assertSame(['A2', 'C', 'B'], $this->names($id), 'Moving past the ends does nothing.');
+
+        status_manager::set_visible((int)$b->get('id'), false, $context);
+        $this->assertSame(['A2', 'C'], array_values(array_map(fn(status $s) => $s->get('name'),
+            status_manager::get_visible($id))));
+        $this->assertSame(['A2', 'C', 'B'], $this->names($id), 'Hidden statuses stay in the full list.');
+
+        status_manager::delete((int)$b->get('id'), $context);
+        $deleted = array_filter($sink->get_events(), fn($e) => $e instanceof status_deleted);
+        $sink->close();
+        $this->assertCount(1, $deleted);
+        $this->assertSame(['A2', 'C'], $this->names($id));
+    }
+
+    public function test_add_missing_defaults(): void {
+        $this->resetAfterTest();
+        [$id] = $this->create_empty_roll();
+
+        $this->assertSame(3, status_manager::add_missing_defaults($id, 'en'));
+        $this->assertSame(status_manager::default_names('en'), $this->names($id));
+
+        $first = array_values(status_manager::get_all($id))[0];
+        status_manager::update((int)$first->get('id'), 'Tarde');
+        $this->assertSame(1, status_manager::add_missing_defaults($id, 'en'));
+        $this->assertSame(0, status_manager::add_missing_defaults($id, 'en'));
+        $names = $this->names($id);
+        $this->assertContains('Tarde', $names);
+        $this->assertContains(status_manager::default_names('en')[0], $names);
+        $this->assertCount(4, $names);
+    }
+
+    public function test_statuses_are_scoped_per_activity(): void {
+        $this->resetAfterTest();
+        [$first] = $this->create_empty_roll();
+        [$second] = $this->create_empty_roll();
+
+        status_manager::create($first, 'Only here');
+        $this->assertSame(['Only here'], $this->names($first));
+        $this->assertSame([], $this->names($second));
+        $this->assertSame(0, (int)status_manager::create($second, 'Mine')->get('sortorder'));
     }
 }
