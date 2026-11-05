@@ -1,0 +1,80 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_rollcall/categories
+
+    Site-wide catalogue of student categories.
+
+    Context variables required for this template:
+    * addurl - URL to create a category
+    * hasrows - whether there are categories
+    * rows - list of {name, color, colorname, count, visible, upurl, downurl, editurl, toggleurl, deleteurl}
+
+    Example context (json):
+    {
+        "addurl": "https://example.com/mod/rollcall/editcategory.php",
+        "hasrows": true,
+        "rows": [
+            {"name": "Repeater", "color": "amber", "colorname": "Amber", "count": 12, "visible": true,
+             "upurl": null, "downurl": "#", "editurl": "#", "toggleurl": "#", "deleteurl": null},
+            {"name": "Auditor", "color": "purple", "colorname": "Purple", "count": 0, "visible": false,
+             "upurl": "#", "downurl": null, "editurl": "#", "toggleurl": "#", "deleteurl": "#"}
+        ]
+    }
+}}
+<div class="mod_rollcall-categories">
+    {{#hasrows}}
+    <table class="table generaltable">
+        <thead>
+            <tr>
+                <th scope="col">{{#str}}order, mod_rollcall{{/str}}</th>
+                <th scope="col">{{#str}}name{{/str}}</th>
+                <th scope="col">{{#str}}color, mod_rollcall{{/str}}</th>
+                <th scope="col">{{#str}}studentsclassified, mod_rollcall{{/str}}</th>
+                <th scope="col">{{#str}}visible, mod_rollcall{{/str}}</th>
+                <th scope="col">{{#str}}actions{{/str}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#rows}}
+            <tr{{^visible}} class="dimmed_text"{{/visible}}>
+                <td class="text-nowrap">
+                    {{#upurl}}<a href="{{upurl}}" class="me-1">{{#pix}}t/up, core, {{#str}}moveup{{/str}}{{/pix}}</a>{{/upurl}}
+                    {{#downurl}}<a href="{{downurl}}">{{#pix}}t/down, core, {{#str}}movedown{{/str}}{{/pix}}</a>{{/downurl}}
+                </td>
+                <td><span class="badge mod_rollcall-badge-{{color}}">{{name}}</span></td>
+                <td>{{colorname}}</td>
+                <td>{{count}}</td>
+                <td>{{#visible}}{{#str}}yes{{/str}}{{/visible}}{{^visible}}{{#str}}no{{/str}}{{/visible}}</td>
+                <td class="text-nowrap">
+                    <a href="{{editurl}}" class="me-2">{{#pix}}t/edit, core, {{#str}}edit{{/str}}{{/pix}}</a>
+                    <a href="{{toggleurl}}" class="me-2">
+                        {{#visible}}{{#pix}}t/hide, core, {{#str}}hide{{/str}}{{/pix}}{{/visible}}
+                        {{^visible}}{{#pix}}t/show, core, {{#str}}show{{/str}}{{/pix}}{{/visible}}
+                    </a>
+                    {{#deleteurl}}<a href="{{deleteurl}}">{{#pix}}t/delete, core, {{#str}}delete{{/str}}{{/pix}}</a>{{/deleteurl}}
+                </td>
+            </tr>
+            {{/rows}}
+        </tbody>
+    </table>
+    {{/hasrows}}
+    {{^hasrows}}
+    <p class="alert alert-info">{{#str}}nocategories, mod_rollcall{{/str}}</p>
+    {{/hasrows}}
+    <a href="{{addurl}}" class="btn btn-primary">{{#str}}addcategory, mod_rollcall{{/str}}</a>
+</div>
