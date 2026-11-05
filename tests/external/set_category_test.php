@@ -135,6 +135,40 @@ final class set_category_test extends \core_external\tests\externallib_testcase 
         $this->assertSame(0, $this->category_of($this->s1->id));
     }
 
+    public function test_bulk_validation_does_not_query_per_student(): void {
+        global $DB;
+        $this->restrict_editor_to_group();
+        $g1 = $DB->get_field('groups_members', 'groupid', ['userid' => $this->editor->id]);
+        $userids = [];
+        for ($i = 0; $i < 60; $i++) {
+            $student = $this->getDataGenerator()->create_and_enrol($this->course, 'student');
+            $this->getDataGenerator()->create_group_member(['groupid' => $g1, 'userid' => $student->id]);
+            $userids[] = (int)$student->id;
+        }
+        $this->setUser($this->editor);
+        $this->call(0, [$this->s1->id]); // Warm up caches unrelated to the batch size.
+
+        $reads = $DB->perf_get_reads();
+        $this->call($this->erasmus->get('id'), $userids);
+        $reads = $DB->perf_get_reads() - $reads;
+
+        // Validation must not grow with the number of students (the per-student checks needed well over 120 reads).
+        $this->assertLessThan(60, $reads);
+    }
+
+    public function test_rejects_enrolled_site_admin(): void {
+        $admin = get_admin();
+        $this->getDataGenerator()->enrol_user($admin->id, $this->course->id, 'editingteacher');
+        $this->setUser($this->editor);
+
+        try {
+            $this->call($this->erasmus->get('id'), [$admin->id]);
+            $this->fail('A site admin is never listed, so they must be rejected.');
+        } catch (\moodle_exception $e) {
+            $this->assertSame('usernotlisted', $e->errorcode);
+        }
+    }
+
     public function test_rejects_user_outside_teacher_groups(): void {
         $this->restrict_editor_to_group();
         $this->setUser($this->editor);

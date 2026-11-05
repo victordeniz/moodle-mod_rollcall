@@ -56,9 +56,32 @@ class roster {
      * @return bool
      */
     public static function is_listed(\cm_info $cm, int $userid, int $groupid): bool {
-        if (!is_enrolled($cm->context, $userid, self::CAPABILITY, true)) {
-            return false;
+        return self::filter_listed($cm, [$userid], $groupid) === [$userid];
+    }
+
+    /**
+     * Returns which of the users are listed in the roll, with the same rules as {@see get_students()}.
+     *
+     * Uses a single query whatever the number of users.
+     *
+     * @param \cm_info $cm
+     * @param int[] $userids
+     * @param int $groupid Group the users must belong to, or 0 for any
+     * @return int[] The listed user ids, in ascending order
+     */
+    public static function filter_listed(\cm_info $cm, array $userids, int $groupid): array {
+        global $DB;
+
+        $userids = array_values(array_unique(array_map('intval', $userids)));
+        if (empty($userids)) {
+            return [];
         }
-        return $groupid === 0 || groups_is_member($groupid, $userid);
+        [$enrolledsql, $params] = get_enrolled_sql($cm->context, self::CAPABILITY, $groupid, true);
+        [$insql, $inparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'rollcalluser');
+        $sql = "SELECT je.id
+                  FROM ($enrolledsql) je
+                 WHERE je.id $insql
+              ORDER BY je.id";
+        return array_map('intval', $DB->get_fieldset_sql($sql, array_merge($params, $inparams)));
     }
 }

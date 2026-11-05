@@ -140,6 +140,30 @@ final class roll_page_test extends \advanced_testcase {
         $this->assertStringNotContainsString('<script>', json_encode($data['legend']));
     }
 
+    public function test_ampersand_in_name_is_escaped_once(): void {
+        global $PAGE;
+        category_manager::update($this->erasmus->get('id'), 'R&D', 'blue');
+
+        $html = $PAGE->get_renderer('core')->render(new roll_page($this->cm, 0, 'all', true));
+
+        $this->assertStringContainsString('R&amp;D', $html);
+        $this->assertStringNotContainsString('&amp;amp;', $html);
+    }
+
+    public function test_catalogue_template_escapes_ampersand_once(): void {
+        global $OUTPUT;
+        $html = $OUTPUT->render_from_template('mod_rollcall/categories', [
+            'hasrows' => true,
+            'addurl' => '#',
+            'rows' => [['name' => format_string('R&D'), 'color' => 'blue', 'colorname' => 'Blue', 'count' => 0,
+                'visible' => true, 'upurl' => null, 'downurl' => null, 'editurl' => '#', 'toggleurl' => '#',
+                'deleteurl' => null]],
+        ]);
+
+        $this->assertStringContainsString('R&amp;D', $html);
+        $this->assertStringNotContainsString('&amp;amp;', $html);
+    }
+
     public function test_empty(): void {
         $gen = $this->getDataGenerator();
         $course = $gen->create_course();

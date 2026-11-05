@@ -88,6 +88,12 @@ class classification {
         $transaction = $DB->start_delegated_transaction();
         foreach ($userids as $userid) {
             $userid = (int)$userid;
+            $result[$userid] = $categoryid;
+            $oldid = isset($before[$userid]) ? (int)$before[$userid]->get('id') : 0;
+            if ($oldid === $categoryid) {
+                // Nothing visible changes. This also keeps classifications in hidden categories, which look regular.
+                continue;
+            }
             $record = $records[$userid] ?? null;
             if ($categoryid === 0) {
                 $record?->delete();
@@ -101,7 +107,6 @@ class classification {
                 $record->set('categoryid', $categoryid);
                 $record->update();
             }
-            $result[$userid] = $categoryid;
         }
         $transaction->allow_commit();
 

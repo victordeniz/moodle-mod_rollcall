@@ -148,6 +148,24 @@ final class classification_test extends \advanced_testcase {
             $this->ids(classification::get_effective($this->course->id, [$uid])));
     }
 
+    public function test_regular_on_hidden_category_keeps_classification(): void {
+        $uid = $this->u[1]->id;
+        classification::set($this->course->id, [$uid], $this->erasmus->get('id'), $this->context);
+        category_manager::set_visible($this->erasmus->get('id'), false);
+
+        // The student looks regular, so applying "regular" in bulk must change nothing.
+        $sink = $this->redirectEvents();
+        $result = classification::set($this->course->id, [$uid], 0, $this->context);
+        $events = array_filter($sink->get_events(), fn($e) => $e instanceof user_category_updated);
+        $sink->close();
+
+        $this->assertSame([$uid => 0], $result);
+        $this->assertCount(0, $events);
+        category_manager::set_visible($this->erasmus->get('id'), true);
+        $this->assertSame([$uid => (int)$this->erasmus->get('id')],
+            $this->ids(classification::get_effective($this->course->id, [$uid])));
+    }
+
     public function test_set_rejects_hidden_category(): void {
         category_manager::set_visible($this->erasmus->get('id'), false);
         $this->expectExceptionObject(new \moodle_exception('invalidcategory', 'mod_rollcall'));

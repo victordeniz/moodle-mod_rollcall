@@ -73,8 +73,8 @@
     <ul class="mod_rollcall-legend list-inline mb-3" data-region="legend" aria-labelledby="mod_rollcall-legend-{{uniqid}}">
         {{#legend}}
         <li class="list-inline-item me-3" data-categoryid="{{id}}">
-            {{#color}}<span class="badge mod_rollcall-badge-{{color}}">{{name}}</span>{{/color}}
-            {{^color}}<span class="badge bg-light text-dark border">{{name}}</span>{{/color}}
+            {{#color}}<span class="badge mod_rollcall-badge-{{color}}">{{{name}}}</span>{{/color}}
+            {{^color}}<span class="badge bg-light text-dark border">{{{name}}}</span>{{/color}}
             <span data-region="count">{{count}}</span>
         </li>
         {{/legend}}
@@ -86,7 +86,7 @@
         <label for="mod_rollcall-filter-{{uniqid}}" class="mb-0">{{#str}}filter, mod_rollcall{{/str}}</label>
         <select id="mod_rollcall-filter-{{uniqid}}" name="filter" class="form-select w-auto">
             {{#filters}}
-            <option value="{{value}}"{{#selected}} selected{{/selected}}>{{name}}</option>
+            <option value="{{value}}"{{#selected}} selected{{/selected}}>{{{name}}}</option>
             {{/filters}}
         </select>
         <button type="submit" class="btn btn-secondary">{{#str}}apply, mod_rollcall{{/str}}</button>
@@ -122,18 +122,18 @@
                     {{{picture}}}
                     <span class="mod_rollcall-fullname">{{fullname}}</span>
                     <span class="badge ms-2{{#color}} mod_rollcall-badge-{{color}}{{/color}}{{^hascategory}} d-none{{/hascategory}}"
-                        data-region="badge">{{categoryname}}</span>
+                        data-region="badge">{{{categoryname}}}</span>
                 </td>
                 <td>
                     {{#canclassify}}
                     <select class="form-select form-select-sm w-auto" data-action="setcategory" autocomplete="off" disabled
                         aria-label="{{#str}}categoryfor, mod_rollcall, {{fullname}}{{/str}}">
                         {{#options}}
-                        <option value="{{id}}" data-color="{{color}}"{{#selected}} selected{{/selected}}>{{name}}</option>
+                        <option value="{{id}}" data-color="{{color}}"{{#selected}} selected{{/selected}}>{{{name}}}</option>
                         {{/options}}
                     </select>
                     {{/canclassify}}
-                    {{^canclassify}}{{categoryname}}{{/canclassify}}
+                    {{^canclassify}}{{{categoryname}}}{{/canclassify}}
                 </td>
             </tr>
             {{/rows}}
@@ -145,7 +145,7 @@
         <label for="mod_rollcall-bulk-{{uniqid}}" class="mb-0">{{#str}}withselected, mod_rollcall{{/str}}</label>
         <select id="mod_rollcall-bulk-{{uniqid}}" class="form-select w-auto" data-region="bulkcategory" autocomplete="off" disabled>
             {{#categories}}
-            <option value="{{id}}" data-color="{{color}}">{{name}}</option>
+            <option value="{{id}}" data-color="{{color}}">{{{name}}}</option>
             {{/categories}}
         </select>
         <button type="button" class="btn btn-primary" data-action="bulkapply" disabled>{{#str}}apply, mod_rollcall{{/str}}</button>

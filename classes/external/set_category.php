@@ -78,14 +78,12 @@ class set_category extends external_api {
         require_capability('mod/rollcall:classify', $context);
 
         $userids = array_values(array_unique(array_map('intval', $userids)));
+        if (count(roster::filter_listed($cm, $userids, 0)) !== count($userids)) {
+            throw new \moodle_exception('usernotlisted', 'mod_rollcall');
+        }
         $allowedgroups = self::get_restricted_groups($cm, (int)$USER->id);
-        foreach ($userids as $userid) {
-            if (!roster::is_listed($cm, $userid, 0)) {
-                throw new \moodle_exception('usernotlisted', 'mod_rollcall');
-            }
-            if ($allowedgroups !== null && !self::is_member_of_any($userid, $allowedgroups)) {
-                throw new \required_capability_exception($context, 'moodle/site:accessallgroups', 'nopermissions', '');
-            }
+        if ($allowedgroups !== null && count(self::filter_group_members($userids, $allowedgroups)) !== count($userids)) {
+            throw new \required_capability_exception($context, 'moodle/site:accessallgroups', 'nopermissions', '');
         }
 
         $result = classification::set((int)$course->id, $userids, $categoryid, $context);
@@ -126,18 +124,23 @@ class set_category extends external_api {
     }
 
     /**
-     * Whether the user belongs to any of the groups.
+     * Returns which of the users belong to at least one of the groups, in a single query.
      *
-     * @param int $userid
+     * @param int[] $userids
      * @param int[] $groupids
-     * @return bool
+     * @return int[]
      */
-    private static function is_member_of_any(int $userid, array $groupids): bool {
-        foreach ($groupids as $groupid) {
-            if (groups_is_member($groupid, $userid)) {
-                return true;
-            }
+    private static function filter_group_members(array $userids, array $groupids): array {
+        global $DB;
+
+        if (empty($userids) || empty($groupids)) {
+            return [];
         }
-        return false;
+        [$usersql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'rollcalluser');
+        [$groupsql, $groupparams] = $DB->get_in_or_equal($groupids, SQL_PARAMS_NAMED, 'rollcallgroup');
+        $sql = "SELECT DISTINCT userid
+                  FROM {groups_members}
+                 WHERE userid $usersql AND groupid $groupsql";
+        return array_map('intval', $DB->get_fieldset_sql($sql, array_merge($params, $groupparams)));
     }
 }
