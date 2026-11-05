@@ -57,6 +57,35 @@ final class lib_test extends \advanced_testcase {
     }
 
     /**
+     * A new activity gets the default statuses in the course language; deleting it removes them;
+     * the course reset keeps them.
+     */
+    public function test_add_instance_seeds_defaults_and_delete_removes_them(): void {
+        global $DB;
+        $this->resetAfterTest();
+        set_config('coursebinenable', 0, 'tool_recyclebin');
+
+        $course = $this->getDataGenerator()->create_course();
+        $roll = $this->getDataGenerator()->create_module('rollcall', ['course' => $course->id]);
+        $lang = \mod_rollcall\local\status_manager::lang_for_course($course->id);
+        $names = fn() => array_values(array_map(fn($s) => $s->get('name'),
+            \mod_rollcall\local\status_manager::get_all((int)$roll->id)));
+        $this->assertSame(\mod_rollcall\local\status_manager::default_names($lang), $names());
+        $this->assertSame(3, count(\mod_rollcall\local\status_manager::get_visible((int)$roll->id)));
+
+        // A course with a forced language gets the names in that language.
+        $forced = $this->getDataGenerator()->create_course(['lang' => 'es']);
+        $this->assertSame('es', \mod_rollcall\local\status_manager::lang_for_course($forced->id));
+
+        // The course reset does not touch them.
+        rollcall_reset_userdata((object)['courseid' => $course->id, 'reset_rollcall_classifications' => 1]);
+        $this->assertCount(3, $names());
+
+        (new \core_courseformat\local\cmactions($course))->delete($roll->cmid);
+        $this->assertSame(0, $DB->count_records('rollcall_status', ['rollcallid' => $roll->id]));
+    }
+
+    /**
      * Students do not see the activity; teachers do (core hides modules without mod/rollcall:view).
      */
     public function test_cm_hidden_for_students(): void {

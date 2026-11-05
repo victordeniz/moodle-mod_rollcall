@@ -58,7 +58,14 @@ function rollcall_add_instance(stdClass $data, $mform = null): int {
 
     $data->timecreated = time();
     $data->timemodified = $data->timecreated;
-    return $DB->insert_record('rollcall', $data);
+    $id = $DB->insert_record('rollcall', $data);
+
+    // The course module does not exist yet, so the defaults are created without events.
+    \mod_rollcall\local\status_manager::add_missing_defaults(
+        $id,
+        \mod_rollcall\local\status_manager::lang_for_course((int)$data->course)
+    );
+    return $id;
 }
 
 /**
@@ -79,7 +86,8 @@ function rollcall_update_instance(stdClass $data, $mform = null): bool {
 /**
  * Deletes a roll instance.
  *
- * Classifications belong to the course, not to the instance, so they are kept.
+ * Classifications belong to the course, not to the instance, so they are kept. The statuses belong to the
+ * instance and are deleted with it.
  *
  * @param int $id The instance id
  * @return bool
@@ -90,6 +98,7 @@ function rollcall_delete_instance($id): bool {
     if (!$DB->record_exists('rollcall', ['id' => $id])) {
         return false;
     }
+    \mod_rollcall\local\status_manager::delete_for_rollcall((int)$id);
     $DB->delete_records('rollcall', ['id' => $id]);
     return true;
 }
