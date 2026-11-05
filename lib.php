@@ -141,3 +141,24 @@ function rollcall_reset_userdata($data) {
     }
     return $status;
 }
+
+/**
+ * Adds the statuses page to the activity navigation of users who can manage them.
+ *
+ * @param settings_navigation $settingsnav
+ * @param navigation_node $rollcallnode
+ */
+function rollcall_extend_settings_navigation(settings_navigation $settingsnav, navigation_node $rollcallnode) {
+    global $PAGE;
+
+    if (!$PAGE->cm || !has_capability('mod/rollcall:managestatuses', $PAGE->cm->context)) {
+        return;
+    }
+    $rollcallnode->add(
+        get_string('statuses', 'mod_rollcall'),
+        new moodle_url('/mod/rollcall/statuses.php', ['id' => $PAGE->cm->id]),
+        navigation_node::TYPE_SETTING,
+        null,
+        'mod_rollcall_statuses'
+    );
+}

@@ -53,6 +53,22 @@ class status_manager {
     }
 
     /**
+     * Returns a status, checking that it belongs to the roll.
+     *
+     * @param int $statusid
+     * @param int $rollcallid
+     * @return status
+     * @throws \moodle_exception invalidstatus if it does not exist or belongs to another roll
+     */
+    public static function get_for_rollcall(int $statusid, int $rollcallid): status {
+        $status = status::get_record(['id' => $statusid, 'rollcallid' => $rollcallid]);
+        if (!$status) {
+            throw new \moodle_exception('invalidstatus', 'mod_rollcall');
+        }
+        return $status;
+    }
+
+    /**
      * Creates a status at the end of the roll's list.
      *
      * @param int $rollcallid
