@@ -55,4 +55,19 @@ final class status_page_test extends \advanced_testcase {
         $this->assertTrue(has_capability('mod/rollcall:managestatuses', $context, $teacher));
         $this->assertFalse(has_capability('mod/rollcall:managestatuses', $context, $student));
     }
+
+    public function test_form_validation_does_not_reveal_statuses_of_other_activity(): void {
+        $this->resetAfterTest();
+        $gen = $this->getDataGenerator();
+        $mine = $gen->create_module('rollcall', ['course' => $gen->create_course()->id]);
+        $other = $gen->create_module('rollcall', ['course' => $gen->create_course()->id]);
+        $foreign = array_values(status_manager::get_all((int)$other->id))[0];
+        $takenname = array_values(status_manager::get_all((int)$other->id))[1]->get('name');
+
+        // Posting the id of a status of another activity must not validate against that activity's names.
+        $form = new \mod_rollcall\form\status_form(null, ['rollcallid' => (int)$mine->id]);
+        $errors = $form->validation(['statusid' => (int)$foreign->get('id'), 'name' => $takenname], []);
+
+        $this->assertSame(get_string('invalidstatus', 'mod_rollcall'), $errors['name'] ?? null);
+    }
 }

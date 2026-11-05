@@ -19,6 +19,7 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . '/formslib.php');
 
+use mod_rollcall\local\status_manager;
 use mod_rollcall\persistent\status;
 
 /**
@@ -59,8 +60,19 @@ class status_form extends \moodleform {
      */
     public function validation($data, $files) {
         $errors = parent::validation($data, $files);
+        $rollcallid = (int)$this->_customdata['rollcallid'];
         $statusid = (int)$data['statusid'];
-        $status = $statusid ? new status($statusid) : new status(0, (object)['rollcallid' => $this->_customdata['rollcallid']]);
+        if ($statusid) {
+            // The posted id is untrusted: it must belong to this roll, or its names would be checked against another roll's.
+            try {
+                $status = status_manager::get_for_rollcall($statusid, $rollcallid);
+            } catch (\moodle_exception $e) {
+                $errors['name'] = get_string('invalidstatus', 'mod_rollcall');
+                return $errors;
+            }
+        } else {
+            $status = new status(0, (object)['rollcallid' => $rollcallid]);
+        }
         $status->set('name', trim($data['name']));
         $result = $status->validate();
         if (is_array($result) && isset($result['name'])) {
