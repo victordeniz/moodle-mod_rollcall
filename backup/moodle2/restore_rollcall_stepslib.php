@@ -24,7 +24,7 @@
  */
 
 /**
- * Restores the roll instance.
+ * Restores the roll instance and its attendance statuses.
  */
 class restore_rollcall_activity_structure_step extends restore_activity_structure_step {
     /**
@@ -33,7 +33,10 @@ class restore_rollcall_activity_structure_step extends restore_activity_structur
      * @return restore_path_element[]
      */
     protected function define_structure() {
-        return $this->prepare_activity_structure([new restore_path_element('rollcall', '/activity/rollcall')]);
+        return $this->prepare_activity_structure([
+            new restore_path_element('rollcall', '/activity/rollcall'),
+            new restore_path_element('rollcall_status', '/activity/rollcall/statuses/status'),
+        ]);
     }
 
     /**
@@ -47,6 +50,30 @@ class restore_rollcall_activity_structure_step extends restore_activity_structur
         $data->course = $this->get_courseid();
         $newitemid = $DB->insert_record('rollcall', $data);
         $this->apply_activity_instance($newitemid);
+    }
+
+    /**
+     * Restores an attendance status of the roll, with a new id.
+     *
+     * A name that collides with one already restored gets a numeric suffix instead of failing the restore.
+     *
+     * @param array $data
+     */
+    protected function process_rollcall_status($data) {
+        global $DB;
+        $data = (object)$data;
+        $data->rollcallid = $this->get_new_parentid('rollcall');
+
+        $taken = array_map(fn($name) => \core_text::strtolower(trim($name)),
+            $DB->get_fieldset_select('rollcall_status', 'name', 'rollcallid = ?', [$data->rollcallid]));
+        $base = $data->name;
+        $suffix = 1;
+        while (in_array(\core_text::strtolower(trim($data->name)), $taken, true)) {
+            $suffix++;
+            $data->name = $base . ' (' . $suffix . ')';
+        }
+        unset($data->id);
+        $DB->insert_record('rollcall_status', $data);
     }
 
     /**

@@ -20,6 +20,8 @@ use backup;
 use backup_controller;
 use backup_setting;
 use mod_rollcall\local\classification;
+use mod_rollcall\local\status_manager;
+use mod_rollcall\persistent\status;
 use restore_controller;
 use restore_dbops;
 
@@ -100,5 +102,71 @@ final class backup_restore_test extends \advanced_testcase {
 
         $this->assertFalse($DB->record_exists('course', ['id' => $course->id]));
         $this->assertSame(0, $DB->count_records('rollcall_usercat', ['courseid' => $course->id]));
+    }
+
+    /**
+     * Returns [name, visible] of the statuses of a roll, in order.
+     *
+     * @param int $rollcallid
+     * @return array
+     */
+    private function status_summary(int $rollcallid): array {
+        return array_values(array_map(fn(status $s) => [$s->get('name'), (bool)$s->get('visible')],
+            status_manager::get_all($rollcallid)));
+    }
+
+    public function test_backup_restore_keeps_statuses(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course();
+        $roll = $gen->create_module('rollcall', ['course' => $course->id]);
+        $all = array_values(status_manager::get_all((int)$roll->id));
+        status_manager::update((int)$all[0]->get('id'), 'Excused');
+        status_manager::set_visible((int)$all[1]->get('id'), false);
+        status_manager::move((int)$all[2]->get('id'), -1);
+
+        $newcourseid = $this->duplicate_with_userdata($course);
+
+        $restored = $DB->get_record('rollcall', ['course' => $newcourseid], '*', MUST_EXIST);
+        $this->assertNotEquals($roll->id, $restored->id);
+        $this->assertSame($this->status_summary((int)$roll->id), $this->status_summary((int)$restored->id));
+        $this->assertCount(3, status_manager::get_all((int)$restored->id));
+        // The original is untouched and the ids are new.
+        $this->assertSame([], array_intersect(
+            array_keys(status_manager::get_all((int)$roll->id)),
+            array_keys(status_manager::get_all((int)$restored->id))
+        ));
+    }
+
+    public function test_restore_of_activity_without_statuses_stays_empty(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course();
+        $roll = $gen->create_module('rollcall', ['course' => $course->id]);
+        status_manager::delete_for_rollcall((int)$roll->id);
+
+        $newcourseid = $this->duplicate_with_userdata($course);
+
+        $restored = $DB->get_record('rollcall', ['course' => $newcourseid], '*', MUST_EXIST);
+        $this->assertSame([], status_manager::get_all((int)$restored->id));
+    }
+
+    public function test_duplicate_activity_copies_statuses(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course();
+        $roll = $gen->create_module('rollcall', ['course' => $course->id]);
+        $first = array_values(status_manager::get_all((int)$roll->id))[0];
+        status_manager::update((int)$first->get('id'), 'Excused');
+
+        $newcm = (new \core_courseformat\local\cmactions($course))->duplicate((int)$roll->cmid);
+
+        $this->assertSame($this->status_summary((int)$roll->id), $this->status_summary((int)$newcm->instance));
+        $this->assertCount(3, status_manager::get_all((int)$newcm->instance));
     }
 }
