@@ -197,4 +197,11 @@ export const init = (cmid) => {
             checkbox.checked = false;
         });
     });
+
+    // The controls are rendered disabled until they can be saved.
+    root.querySelectorAll(
+        `${SELECTORS.SETCATEGORY}, ${SELECTORS.SELECT}, ${SELECTORS.SELECTALL}, ${SELECTORS.BULKCATEGORY}, ${SELECTORS.BULKAPPLY}`
+    ).forEach((control) => {
+        control.disabled = false;
+    });
 };
