@@ -1,11 +1,15 @@
-/* Category palette. Keep in sync with \mod_rollcall\local\palette::COLORS. */
+/* Category palette. Keep in sync with \mod_rollcall\local\palette::COLORS.
+   Bootstrap 5 paints table cells with --bs-table-bg and an inset box-shadow of --bs-table-accent-bg,
+   so the row colour is set through those variables. */
 
-.mod_rollcall-row-amber td {
+.mod_rollcall-row-amber > td {
+    --bs-table-bg: #fef3c7;
+    --bs-table-accent-bg: #fef3c7;
     background-color: #fef3c7;
 }
 
-.mod_rollcall-row-amber td:first-child {
-    box-shadow: inset 4px 0 #b45309;
+.mod_rollcall-row-amber > td:first-child {
+    box-shadow: inset 4px 0 #b45309, inset 0 0 0 9999px #fef3c7;
 }
 
 .mod_rollcall-badge-amber {
@@ -13,12 +17,14 @@
     color: #fff;
 }
 
-.mod_rollcall-row-blue td {
+.mod_rollcall-row-blue > td {
+    --bs-table-bg: #dbeafe;
+    --bs-table-accent-bg: #dbeafe;
     background-color: #dbeafe;
 }
 
-.mod_rollcall-row-blue td:first-child {
-    box-shadow: inset 4px 0 #1d4ed8;
+.mod_rollcall-row-blue > td:first-child {
+    box-shadow: inset 4px 0 #1d4ed8, inset 0 0 0 9999px #dbeafe;
 }
 
 .mod_rollcall-badge-blue {
@@ -26,12 +32,14 @@
     color: #fff;
 }
 
-.mod_rollcall-row-green td {
+.mod_rollcall-row-green > td {
+    --bs-table-bg: #dcfce7;
+    --bs-table-accent-bg: #dcfce7;
     background-color: #dcfce7;
 }
 
-.mod_rollcall-row-green td:first-child {
-    box-shadow: inset 4px 0 #15803d;
+.mod_rollcall-row-green > td:first-child {
+    box-shadow: inset 4px 0 #15803d, inset 0 0 0 9999px #dcfce7;
 }
 
 .mod_rollcall-badge-green {
@@ -39,12 +47,14 @@
     color: #fff;
 }
 
-.mod_rollcall-row-purple td {
+.mod_rollcall-row-purple > td {
+    --bs-table-bg: #f3e8ff;
+    --bs-table-accent-bg: #f3e8ff;
     background-color: #f3e8ff;
 }
 
-.mod_rollcall-row-purple td:first-child {
-    box-shadow: inset 4px 0 #7e22ce;
+.mod_rollcall-row-purple > td:first-child {
+    box-shadow: inset 4px 0 #7e22ce, inset 0 0 0 9999px #f3e8ff;
 }
 
 .mod_rollcall-badge-purple {
@@ -52,12 +62,14 @@
     color: #fff;
 }
 
-.mod_rollcall-row-red td {
+.mod_rollcall-row-red > td {
+    --bs-table-bg: #fee2e2;
+    --bs-table-accent-bg: #fee2e2;
     background-color: #fee2e2;
 }
 
-.mod_rollcall-row-red td:first-child {
-    box-shadow: inset 4px 0 #b91c1c;
+.mod_rollcall-row-red > td:first-child {
+    box-shadow: inset 4px 0 #b91c1c, inset 0 0 0 9999px #fee2e2;
 }
 
 .mod_rollcall-badge-red {
@@ -65,12 +77,14 @@
     color: #fff;
 }
 
-.mod_rollcall-row-teal td {
+.mod_rollcall-row-teal > td {
+    --bs-table-bg: #ccfbf1;
+    --bs-table-accent-bg: #ccfbf1;
     background-color: #ccfbf1;
 }
 
-.mod_rollcall-row-teal td:first-child {
-    box-shadow: inset 4px 0 #0f766e;
+.mod_rollcall-row-teal > td:first-child {
+    box-shadow: inset 4px 0 #0f766e, inset 0 0 0 9999px #ccfbf1;
 }
 
 .mod_rollcall-badge-teal {
@@ -78,12 +92,14 @@
     color: #fff;
 }
 
-.mod_rollcall-row-pink td {
+.mod_rollcall-row-pink > td {
+    --bs-table-bg: #fce7f3;
+    --bs-table-accent-bg: #fce7f3;
     background-color: #fce7f3;
 }
 
-.mod_rollcall-row-pink td:first-child {
-    box-shadow: inset 4px 0 #be185d;
+.mod_rollcall-row-pink > td:first-child {
+    box-shadow: inset 4px 0 #be185d, inset 0 0 0 9999px #fce7f3;
 }
 
 .mod_rollcall-badge-pink {
@@ -91,12 +107,14 @@
     color: #fff;
 }
 
-.mod_rollcall-row-slate td {
+.mod_rollcall-row-slate > td {
+    --bs-table-bg: #f1f5f9;
+    --bs-table-accent-bg: #f1f5f9;
     background-color: #f1f5f9;
 }
 
-.mod_rollcall-row-slate td:first-child {
-    box-shadow: inset 4px 0 #475569;
+.mod_rollcall-row-slate > td:first-child {
+    box-shadow: inset 4px 0 #475569, inset 0 0 0 9999px #f1f5f9;
 }
 
 .mod_rollcall-badge-slate {

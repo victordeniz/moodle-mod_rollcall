@@ -98,7 +98,7 @@
             <tr>
                 {{#canclassify}}
                 <th scope="col" class="mod_rollcall-select">
-                    <input type="checkbox" class="form-check-input" data-action="selectall"
+                    <input type="checkbox" class="form-check-input" data-action="selectall" autocomplete="off"
                         aria-label="{{#str}}selectall, mod_rollcall{{/str}}">
                 </th>
                 {{/canclassify}}
@@ -111,7 +111,7 @@
             <tr data-userid="{{userid}}" data-categoryid="{{categoryid}}"{{#color}} class="mod_rollcall-row-{{color}}"{{/color}}>
                 {{#canclassify}}
                 <td class="mod_rollcall-select">
-                    <input type="checkbox" class="form-check-input" data-action="select" value="{{userid}}"
+                    <input type="checkbox" class="form-check-input" data-action="select" value="{{userid}}" autocomplete="off"
                         aria-label="{{#str}}selectuser, mod_rollcall, {{fullname}}{{/str}}">
                 </td>
                 {{/canclassify}}
@@ -123,7 +123,7 @@
                 </td>
                 <td>
                     {{#canclassify}}
-                    <select class="form-select form-select-sm w-auto" data-action="setcategory"
+                    <select class="form-select form-select-sm w-auto" data-action="setcategory" autocomplete="off"
                         aria-label="{{#str}}categoryfor, mod_rollcall, {{fullname}}{{/str}}">
                         {{#options}}
                         <option value="{{id}}" data-color="{{color}}"{{#selected}} selected{{/selected}}>{{name}}</option>
@@ -140,7 +140,7 @@
     {{#canclassify}}
     <div class="d-flex flex-wrap gap-2 align-items-center" data-region="bulk">
         <label for="mod_rollcall-bulk-{{uniqid}}" class="mb-0">{{#str}}withselected, mod_rollcall{{/str}}</label>
-        <select id="mod_rollcall-bulk-{{uniqid}}" class="form-select w-auto" data-region="bulkcategory">
+        <select id="mod_rollcall-bulk-{{uniqid}}" class="form-select w-auto" data-region="bulkcategory" autocomplete="off">
             {{#categories}}
             <option value="{{id}}" data-color="{{color}}">{{name}}</option>
             {{/categories}}
