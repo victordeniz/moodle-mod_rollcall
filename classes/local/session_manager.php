@@ -169,6 +169,124 @@ class session_manager {
     }
 
     /**
+     * Tells whether a user can manage sessions of a group (0 for the whole activity).
+     *
+     * @param \cm_info $cm
+     * @param int $groupid
+     * @param int|null $userid Defaults to the current user
+     * @return bool
+     */
+    public static function can_manage(\cm_info $cm, int $groupid, ?int $userid = null): bool {
+        global $DB, $USER;
+        $userid = $userid ?? (int)$USER->id;
+        $context = $cm->context;
+
+        if (!has_capability('mod/rollcall:managesessions', $context, $userid)) {
+            return false;
+        }
+        $accessall = has_capability('moodle/site:accessallgroups', $context, $userid);
+
+        if ($groupid > 0) {
+            $group = $DB->get_record('groups', ['id' => $groupid], 'id, courseid');
+            if ($group && (int)$group->courseid !== (int)$cm->course) {
+                // Groups of other courses can never be used.
+                return false;
+            }
+            if (!$group) {
+                // Deleted group: only users with access to all groups may touch its sessions.
+                return $accessall;
+            }
+        }
+        if (groups_get_activity_groupmode($cm) == NOGROUPS) {
+            return true;
+        }
+        if ($groupid == 0) {
+            return $accessall;
+        }
+        return $accessall || groups_is_member($groupid, $userid);
+    }
+
+    /**
+     * Returns the group options of the session form as [groupid => name].
+     *
+     * @param \cm_info $cm
+     * @param int|null $userid Defaults to the current user
+     * @return string[]
+     */
+    public static function group_options(\cm_info $cm, ?int $userid = null): array {
+        global $USER;
+        $userid = $userid ?? (int)$USER->id;
+        if (groups_get_activity_groupmode($cm) == NOGROUPS) {
+            return [];
+        }
+        $accessall = has_capability('moodle/site:accessallgroups', $cm->context, $userid);
+        $options = [];
+        if ($accessall) {
+            $options[0] = get_string('wholeactivity', 'mod_rollcall');
+        }
+        $groups = groups_get_all_groups($cm->course, $accessall ? 0 : $userid, $cm->groupingid);
+        foreach ($groups as $group) {
+            $options[(int)$group->id] = format_string($group->name, true, ['context' => $cm->context]);
+        }
+        return $options;
+    }
+
+    /**
+     * Tells whether a user can create sessions in the roll.
+     *
+     * @param \cm_info $cm
+     * @param int|null $userid Defaults to the current user
+     * @return bool
+     */
+    public static function can_create(\cm_info $cm, ?int $userid = null): bool {
+        global $USER;
+        $userid = $userid ?? (int)$USER->id;
+        if (!has_capability('mod/rollcall:managesessions', $cm->context, $userid)) {
+            return false;
+        }
+        return groups_get_activity_groupmode($cm) == NOGROUPS || !empty(self::group_options($cm, $userid));
+    }
+
+    /**
+     * Returns the sessions a user sees, newest first.
+     *
+     * Sessions of deleted groups are only included for users with access to all groups.
+     *
+     * @param \cm_info $cm
+     * @param int $groupid Group filter, 0 for all
+     * @param int|null $userid Defaults to the current user
+     * @return session[]
+     */
+    public static function get_visible(\cm_info $cm, int $groupid, ?int $userid = null): array {
+        global $DB, $USER;
+        $userid = $userid ?? (int)$USER->id;
+        $accessall = has_capability('moodle/site:accessallgroups', $cm->context, $userid);
+
+        $where = 's.rollcallid = :rollcallid';
+        $params = ['rollcallid' => (int)$cm->instance];
+        if (!$accessall) {
+            $where .= ' AND (s.groupid = 0 OR g.id IS NOT NULL)';
+        }
+        if ($groupid > 0 && groups_get_activity_groupmode($cm) != NOGROUPS) {
+            $where .= ' AND s.groupid IN (:groupid, 0)';
+            $params['groupid'] = $groupid;
+        }
+        $records = $DB->get_records_sql(
+            "SELECT s.*
+               FROM {" . session::TABLE . "} s
+          LEFT JOIN {groups} g ON g.id = s.groupid
+              WHERE $where
+           ORDER BY s.sessdate DESC, s.id DESC",
+            $params
+        );
+        $sessions = [];
+        foreach ($records as $record) {
+            $sessions[] = new session(0, $record);
+        }
+        return $sessions;
+    }
+
+    /**
      * Triggers a session event when a context is available.
      *
      * @param string $eventclass
