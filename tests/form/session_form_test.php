@@ -68,6 +68,10 @@ final class session_form_test extends \advanced_testcase {
             $form = $this->submit($custom, ['durationminutes' => $bad]);
             $this->assertNull($form->get_data(), "Duration $bad must be rejected");
         }
+        foreach (['   ', '<b></b>'] as $blank) {
+            $form = $this->submit($custom, ['name' => $blank]);
+            $this->assertNull($form->get_data(), "Name '$blank' must be rejected");
+        }
         foreach (['1', '1440'] as $good) {
             $form = $this->submit($custom, ['durationminutes' => $good]);
             $this->assertNotNull($form->get_data(), "Duration $good must be accepted");

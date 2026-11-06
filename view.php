@@ -94,7 +94,7 @@ $nogroup = $groupmode == SEPARATEGROUPS && $groupid === 0 && !has_capability('mo
 echo $OUTPUT->header();
 groups_print_activity_menu($cm, $url);
 if ($nogroup) {
-    echo $OUTPUT->notification(get_string('notingroup', 'mod_rollcall'), notification::NOTIFY_INFO);
+    echo $OUTPUT->notification(get_string('notingroupsessions', 'mod_rollcall'), notification::NOTIFY_INFO);
 } else {
     echo $OUTPUT->render(new \mod_rollcall\output\sessions_page($cm, $groupid, $highlight));
 }

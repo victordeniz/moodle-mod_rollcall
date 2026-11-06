@@ -17,7 +17,7 @@ Actividad de Moodle 5.2 para pasar lista de alumnos. Muestra al profesorado los 
   - El reinicio del curso borra las clasificaciones (opción marcada por defecto) y las sesiones (opción «Borrar todas las sesiones», también marcada por defecto).
   - Borrar la actividad borra sus sesiones.
   - Las copias de seguridad y de curso **nunca** incluyen las clasificaciones.
-  - Las sesiones **siempre** se incluyen en la copia de seguridad y en el duplicado de la actividad, también sin datos de usuario. Al restaurar, el grupo se reasigna con el mapeo de grupos; si el grupo no está en la copia (copia sin grupos o restauración en otro curso), la sesión pasa a «Toda la actividad». Las fechas se desplazan con la fecha de inicio del curso, como el resto de fechas de Moodle.
+  - Las sesiones **siempre** se incluyen en la copia de seguridad y en el duplicado de la actividad, también sin datos de usuario. Al restaurar, el grupo se reasigna con el mapeo de grupos; si el grupo no está incluido en la copia o no tiene correspondencia en el mapeo (por ejemplo, una copia sin grupos), la sesión pasa a «Toda la actividad». Las fechas se desplazan con la fecha de inicio del curso, como el resto de fechas de Moodle.
 
 Fuera de la v1: categorías ligadas a cohortes (el cálculo está centralizado en `\mod_rollcall\local\classification` para añadirlas), asignar un estado de asistencia a cada alumno en cada sesión (las sesiones existen, pero todavía no tienen asistencia), tipos de sesión y series de sesiones, peso de los estados para el porcentaje de faltas, calificaciones, app móvil.
 

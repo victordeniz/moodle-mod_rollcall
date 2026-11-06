@@ -77,6 +77,9 @@ class session_form extends \moodleform {
      */
     public function validation($data, $files) {
         $errors = parent::validation($data, $files);
+        if (trim(clean_param($data['name'] ?? '', PARAM_TEXT)) === '') {
+            $errors['name'] = get_string('required');
+        }
         $minutes = trim((string)($data['durationminutes'] ?? ''));
         if (!preg_match('/^[0-9]+$/', $minutes) || (int)$minutes < 1 || (int)$minutes > 1440) {
             $errors['durationminutes'] = get_string('invalidduration', 'mod_rollcall');
