@@ -125,8 +125,18 @@ final class session_permissions_test extends \advanced_testcase {
         $this->assertFalse(session_manager::can_manage($cm, $this->g2->id, $t));
 
         $cm = $this->cm(NOGROUPS);
+        $this->assertFalse(session_manager::can_manage($cm, $foreign->id, $t));
+        $this->assertFalse(session_manager::can_manage($cm, $foreign->id, $m));
         $this->assertTrue(session_manager::can_manage($cm, 0, $t));
         $this->assertTrue(session_manager::can_manage($cm, $this->g2->id, $t));
+
+        // A module grouping that holds only G2 excludes G1 for the teacher, not for the manager.
+        $grouping = $this->getDataGenerator()->create_grouping(['courseid' => $this->course->id]);
+        $this->getDataGenerator()->create_grouping_group(['groupingid' => $grouping->id, 'groupid' => $this->g2->id]);
+        $cm = $this->cm(SEPARATEGROUPS, $grouping->id);
+        $this->assertFalse(session_manager::can_manage($cm, $this->g1->id, $t));
+        $this->assertTrue(session_manager::can_manage($cm, $this->g1->id, $m));
+        $this->assertFalse(session_manager::can_manage($cm, -1, $m));
 
         groups_delete_group($this->g1->id);
         foreach ([SEPARATEGROUPS, VISIBLEGROUPS, NOGROUPS] as $mode) {
@@ -167,8 +177,11 @@ final class session_permissions_test extends \advanced_testcase {
         $cm = $this->cm(SEPARATEGROUPS);
         $this->assertTrue(session_manager::can_create($cm, $this->teacher->id));
         $this->assertFalse(session_manager::can_create($cm, $this->student->id));
-        // The editing teacher has the capability but no group and no accessallgroups... it has accessallgroups.
+        // The editing teacher has accessallgroups, so can create even without belonging to a group.
         $this->assertTrue(session_manager::can_create($cm, $this->editing->id));
+        // A teacher with no group and no accessallgroups has nowhere to create sessions.
+        $loner = $this->getDataGenerator()->create_and_enrol($this->course, 'teacher');
+        $this->assertFalse(session_manager::can_create($cm, $loner->id));
         $cm = $this->cm(NOGROUPS);
         $this->assertTrue(session_manager::can_create($cm, $this->teacher->id));
     }
@@ -193,8 +206,20 @@ final class session_permissions_test extends \advanced_testcase {
         $visible = session_manager::get_visible($cm, 0, $this->manager->id);
         $this->assertSame([(int)$s2->get('id'), (int)$s1->get('id'), (int)$s0->get('id')], $ids($visible));
 
-        groups_delete_group($this->g2->id);
+        // Fail closed under separate groups: no group, or a group the teacher is not in, gives nothing.
+        $this->assertSame([], session_manager::get_visible($cm, 0, $this->teacher->id));
+        $this->assertSame([], session_manager::get_visible($cm, (int)$this->g2->id, $this->teacher->id));
+
+        // A session pointing at another course's group counts as foreign: accessallgroups only.
+        $other = $this->getDataGenerator()->create_course();
+        $foreign = $this->getDataGenerator()->create_group(['courseid' => $other->id]);
+        $s3 = session_manager::create($id, (int)$foreign->id, 'S3', 4000, 60);
         $cm = $this->cm(NOGROUPS);
+        $this->assertNotContains((int)$s3->get('id'), $ids(session_manager::get_visible($cm, 0, $this->teacher->id)));
+        $this->assertContains((int)$s3->get('id'), $ids(session_manager::get_visible($cm, 0, $this->manager->id)));
+        $s3->delete();
+
+        groups_delete_group($this->g2->id);
         $visible = session_manager::get_visible($cm, 0, $this->teacher->id);
         $this->assertSame([(int)$s1->get('id'), (int)$s0->get('id')], $ids($visible));
         $visible = session_manager::get_visible($cm, 0, $this->manager->id);

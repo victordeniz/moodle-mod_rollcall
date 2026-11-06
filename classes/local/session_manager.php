@@ -181,6 +181,10 @@ class session_manager {
         $userid = $userid ?? (int)$USER->id;
         $context = $cm->context;
 
+        if ($groupid < 0) {
+            return false;
+        }
+
         if (!has_capability('mod/rollcall:managesessions', $context, $userid)) {
             return false;
         }
@@ -203,7 +207,16 @@ class session_manager {
         if ($groupid == 0) {
             return $accessall;
         }
-        return $accessall || groups_is_member($groupid, $userid);
+        if ($accessall) {
+            return true;
+        }
+        if (
+            $cm->groupingid
+            && !$DB->record_exists('groupings_groups', ['groupingid' => $cm->groupingid, 'groupid' => $groupid])
+        ) {
+            return false;
+        }
+        return groups_is_member($groupid, $userid);
     }
 
     /**
@@ -250,7 +263,9 @@ class session_manager {
     /**
      * Returns the sessions a user sees, newest first.
      *
-     * Sessions of deleted groups are only included for users with access to all groups.
+     * Sessions of deleted groups, or of groups of another course, are only included for users with
+     * access to all groups. Under separate groups, a user without access to all groups gets nothing
+     * unless they ask for a group they belong to (fail closed).
      *
      * @param \cm_info $cm
      * @param int $groupid Group filter, 0 for all
@@ -262,8 +277,16 @@ class session_manager {
         $userid = $userid ?? (int)$USER->id;
         $accessall = has_capability('moodle/site:accessallgroups', $cm->context, $userid);
 
+        if (
+            !$accessall
+            && groups_get_activity_groupmode($cm) == SEPARATEGROUPS
+            && ($groupid <= 0 || !groups_is_member($groupid, $userid))
+        ) {
+            return [];
+        }
+
         $where = 's.rollcallid = :rollcallid';
-        $params = ['rollcallid' => (int)$cm->instance];
+        $params = ['rollcallid' => (int)$cm->instance, 'courseid' => (int)$cm->course];
         if (!$accessall) {
             $where .= ' AND (s.groupid = 0 OR g.id IS NOT NULL)';
         }
@@ -274,7 +297,7 @@ class session_manager {
         $records = $DB->get_records_sql(
             "SELECT s.*
                FROM {" . session::TABLE . "} s
-          LEFT JOIN {groups} g ON g.id = s.groupid
+          LEFT JOIN {groups} g ON g.id = s.groupid AND g.courseid = :courseid
               WHERE $where
            ORDER BY s.sessdate DESC, s.id DESC",
             $params
