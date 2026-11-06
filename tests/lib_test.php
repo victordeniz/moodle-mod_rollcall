@@ -86,6 +86,44 @@ final class lib_test extends \advanced_testcase {
     }
 
     /**
+     * Deleting an activity removes only its sessions; the course reset removes those of the whole course.
+     */
+    public function test_delete_instance_and_course_reset_remove_sessions(): void {
+        global $DB;
+        $this->resetAfterTest();
+        set_config('coursebinenable', 0, 'tool_recyclebin');
+
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course();
+        $other = $gen->create_course();
+        $rollone = $gen->create_module('rollcall', ['course' => $course->id]);
+        $polltwo = $gen->create_module('rollcall', ['course' => $course->id]);
+        $rollother = $gen->create_module('rollcall', ['course' => $other->id]);
+        foreach ([$rollone, $polltwo, $rollother] as $roll) {
+            \mod_rollcall\local\session_manager::create((int)$roll->id, 0, 'S', 1000, 3600);
+        }
+        $count = fn($roll) => $DB->count_records('rollcall_session', ['rollcallid' => $roll->id]);
+
+        (new \core_courseformat\local\cmactions($course))->delete($rollone->cmid);
+        $this->assertSame(0, $count($rollone));
+        $this->assertSame(1, $count($polltwo));
+        $this->assertSame(1, $count($rollother));
+
+        // Without the flag nothing is deleted.
+        rollcall_reset_userdata((object)['courseid' => $course->id, 'reset_rollcall_sessions' => 0]);
+        $this->assertSame(1, $count($polltwo));
+
+        $status = rollcall_reset_userdata((object)['courseid' => $course->id, 'reset_rollcall_sessions' => 1]);
+        $this->assertSame(0, $count($polltwo));
+        $this->assertSame(1, $count($rollother));
+        $this->assertCount(1, $status);
+        $this->assertSame(
+            ['reset_rollcall_sessions' => 1],
+            array_intersect_key(rollcall_reset_course_form_defaults($course), ['reset_rollcall_sessions' => 1])
+        );
+    }
+
+    /**
      * Students do not see the activity; teachers do (core hides modules without mod/rollcall:view).
      */
     public function test_cm_hidden_for_students(): void {

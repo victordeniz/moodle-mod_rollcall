@@ -1,0 +1,71 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_rollcall/sessions_page
+
+    Sessions of a roll that the current user can see.
+
+    Context variables required for this template:
+    * addurl - URL to create a session, null if the user cannot
+    * hasrows - whether there are sessions
+    * rows - list of {name, date, duration, group, highlight, editurl, deleteurl}
+
+    Example context (json):
+    {
+        "addurl": "https://example.com/mod/rollcall/editsession.php?id=1",
+        "hasrows": true,
+        "rows": [
+            {"name": "Session 06/11/26", "date": "6 November 2026, 10:00", "duration": "1 hour", "group": "G1",
+             "highlight": true, "editurl": "#", "deleteurl": "#"},
+            {"name": "Lab", "date": "5 November 2026, 09:00", "duration": "1 hour 30 mins", "group": "Whole activity",
+             "highlight": false, "editurl": null, "deleteurl": null}
+        ]
+    }
+}}
+<div class="mod_rollcall-sessions">
+    {{#hasrows}}
+    <table class="table generaltable">
+        <thead>
+            <tr>
+                <th scope="col">{{#str}}name{{/str}}</th>
+                <th scope="col">{{#str}}sessiondate, mod_rollcall{{/str}}</th>
+                <th scope="col">{{#str}}duration, mod_rollcall{{/str}}</th>
+                <th scope="col">{{#str}}group{{/str}}</th>
+                <th scope="col">{{#str}}actions{{/str}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#rows}}
+            <tr{{#highlight}} class="table-warning"{{/highlight}}>
+                <td>{{{name}}}</td>
+                <td>{{date}}</td>
+                <td>{{duration}}</td>
+                <td>{{{group}}}</td>
+                <td class="text-nowrap">
+                    {{#editurl}}<a href="{{editurl}}" class="me-2">{{#pix}}t/edit, core, {{#str}}edit{{/str}}{{/pix}}</a>{{/editurl}}
+                    {{#deleteurl}}<a href="{{deleteurl}}">{{#pix}}t/delete, core, {{#str}}delete{{/str}}{{/pix}}</a>{{/deleteurl}}
+                </td>
+            </tr>
+            {{/rows}}
+        </tbody>
+    </table>
+    {{/hasrows}}
+    {{^hasrows}}
+    <p class="alert alert-info">{{#str}}nosessions, mod_rollcall{{/str}}</p>
+    {{/hasrows}}
+    {{#addurl}}<a href="{{addurl}}" class="btn btn-primary">{{#str}}addsession, mod_rollcall{{/str}}</a>{{/addurl}}
+</div>

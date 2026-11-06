@@ -99,6 +99,7 @@ function rollcall_delete_instance($id): bool {
         return false;
     }
     \mod_rollcall\local\status_manager::delete_for_rollcall((int)$id);
+    \mod_rollcall\local\session_manager::delete_for_rollcall((int)$id);
     $DB->delete_records('rollcall', ['id' => $id]);
     return true;
 }
@@ -111,6 +112,7 @@ function rollcall_delete_instance($id): bool {
 function rollcall_reset_course_form_definition(&$mform) {
     $mform->addElement('header', 'rollcallheader', get_string('modulenameplural', 'mod_rollcall'));
     $mform->addElement('advcheckbox', 'reset_rollcall_classifications', get_string('resetclassifications', 'mod_rollcall'));
+    $mform->addElement('advcheckbox', 'reset_rollcall_sessions', get_string('resetsessions', 'mod_rollcall'));
 }
 
 /**
@@ -120,11 +122,11 @@ function rollcall_reset_course_form_definition(&$mform) {
  * @return array
  */
 function rollcall_reset_course_form_defaults($course) {
-    return ['reset_rollcall_classifications' => 1];
+    return ['reset_rollcall_classifications' => 1, 'reset_rollcall_sessions' => 1];
 }
 
 /**
- * Deletes the course classifications when requested by the course reset.
+ * Deletes the course classifications and sessions when requested by the course reset.
  *
  * @param stdClass $data The reset form data
  * @return array Status array
@@ -139,11 +141,21 @@ function rollcall_reset_userdata($data) {
             'error' => false,
         ];
     }
+    if (!empty($data->reset_rollcall_sessions)) {
+        \mod_rollcall\local\session_manager::delete_for_course((int)$data->courseid);
+        $status[] = [
+            'component' => get_string('modulenameplural', 'mod_rollcall'),
+            'item' => get_string('resetsessions', 'mod_rollcall'),
+            'error' => false,
+        ];
+    }
     return $status;
 }
 
 /**
- * Adds the statuses page to the activity navigation of users who can manage them.
+ * Adds the students and statuses pages to the activity navigation.
+ *
+ * The students page is shown to users who can view the roll, the statuses page only to those who can manage them.
  *
  * @param settings_navigation $settingsnav
  * @param navigation_node $rollcallnode
@@ -151,14 +163,26 @@ function rollcall_reset_userdata($data) {
 function rollcall_extend_settings_navigation(settings_navigation $settingsnav, navigation_node $rollcallnode) {
     global $PAGE;
 
-    if (!$PAGE->cm || !has_capability('mod/rollcall:managestatuses', $PAGE->cm->context)) {
+    if (!$PAGE->cm) {
         return;
     }
-    $rollcallnode->add(
-        get_string('statuses', 'mod_rollcall'),
-        new moodle_url('/mod/rollcall/statuses.php', ['id' => $PAGE->cm->id]),
-        navigation_node::TYPE_SETTING,
-        null,
-        'mod_rollcall_statuses'
-    );
+    $context = $PAGE->cm->context;
+    if (has_capability('mod/rollcall:view', $context)) {
+        $rollcallnode->add(
+            get_string('students', 'mod_rollcall'),
+            new moodle_url('/mod/rollcall/students.php', ['id' => $PAGE->cm->id]),
+            navigation_node::TYPE_SETTING,
+            null,
+            'mod_rollcall_students'
+        );
+    }
+    if (has_capability('mod/rollcall:managestatuses', $context)) {
+        $rollcallnode->add(
+            get_string('statuses', 'mod_rollcall'),
+            new moodle_url('/mod/rollcall/statuses.php', ['id' => $PAGE->cm->id]),
+            navigation_node::TYPE_SETTING,
+            null,
+            'mod_rollcall_statuses'
+        );
+    }
 }
