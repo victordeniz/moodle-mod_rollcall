@@ -248,4 +248,20 @@ final class backup_restore_test extends \advanced_testcase {
         $this->assertSame(['Whole' => [0, $start + 2 * DAYSECS + $shift, 3600]],
             $this->sessions_by_name((int)$restored->id));
     }
+
+    public function test_duplicate_activity_keeps_session_groups(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course();
+        $group = $gen->create_group(['courseid' => $course->id, 'name' => 'G1']);
+        $roll = $gen->create_module('rollcall', ['course' => $course->id]);
+        session_manager::create((int)$roll->id, 0, 'Whole', 1700000000, 3600);
+        session_manager::create((int)$roll->id, (int)$group->id, 'Grouped', 1700100000, 1800);
+
+        $newcm = (new \core_courseformat\local\cmactions($course))->duplicate((int)$roll->cmid);
+
+        $this->assertSame(['Whole' => [0, 1700000000, 3600], 'Grouped' => [(int)$group->id, 1700100000, 1800]],
+            $this->sessions_by_name((int)$newcm->instance));
+    }
 }
