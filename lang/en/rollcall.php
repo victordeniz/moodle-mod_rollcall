@@ -111,6 +111,7 @@ $string['statuses'] = 'Statuses';
 $string['statusinuse'] = 'This status has been used to record attendance; hide it instead of deleting it.';
 $string['statusnameexists'] = 'A status with this name already exists in this roll.';
 $string['student'] = 'Student';
+$string['students'] = 'Students';
 $string['studentsclassified'] = 'Students classified';
 $string['usernotlisted'] = 'The user is not a student listed in this roll.';
 $string['visible'] = 'Visible';

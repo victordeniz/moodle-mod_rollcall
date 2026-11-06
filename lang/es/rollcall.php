@@ -111,6 +111,7 @@ $string['statuses'] = 'Estados';
 $string['statusinuse'] = 'Este estado se ha usado para registrar asistencia; ocúltalo en lugar de borrarlo.';
 $string['statusnameexists'] = 'Ya existe un estado con este nombre en esta lista.';
 $string['student'] = 'Alumno';
+$string['students'] = 'Alumnos';
 $string['studentsclassified'] = 'Alumnos clasificados';
 $string['usernotlisted'] = 'El usuario no es un alumno de esta lista.';
 $string['visible'] = 'Visible';

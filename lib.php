@@ -153,7 +153,9 @@ function rollcall_reset_userdata($data) {
 }
 
 /**
- * Adds the statuses page to the activity navigation of users who can manage them.
+ * Adds the students and statuses pages to the activity navigation.
+ *
+ * The students page is shown to users who can view the roll, the statuses page only to those who can manage them.
  *
  * @param settings_navigation $settingsnav
  * @param navigation_node $rollcallnode
@@ -161,14 +163,26 @@ function rollcall_reset_userdata($data) {
 function rollcall_extend_settings_navigation(settings_navigation $settingsnav, navigation_node $rollcallnode) {
     global $PAGE;
 
-    if (!$PAGE->cm || !has_capability('mod/rollcall:managestatuses', $PAGE->cm->context)) {
+    if (!$PAGE->cm) {
         return;
     }
-    $rollcallnode->add(
-        get_string('statuses', 'mod_rollcall'),
-        new moodle_url('/mod/rollcall/statuses.php', ['id' => $PAGE->cm->id]),
-        navigation_node::TYPE_SETTING,
-        null,
-        'mod_rollcall_statuses'
-    );
+    $context = $PAGE->cm->context;
+    if (has_capability('mod/rollcall:view', $context)) {
+        $rollcallnode->add(
+            get_string('students', 'mod_rollcall'),
+            new moodle_url('/mod/rollcall/students.php', ['id' => $PAGE->cm->id]),
+            navigation_node::TYPE_SETTING,
+            null,
+            'mod_rollcall_students'
+        );
+    }
+    if (has_capability('mod/rollcall:managestatuses', $context)) {
+        $rollcallnode->add(
+            get_string('statuses', 'mod_rollcall'),
+            new moodle_url('/mod/rollcall/statuses.php', ['id' => $PAGE->cm->id]),
+            navigation_node::TYPE_SETTING,
+            null,
+            'mod_rollcall_statuses'
+        );
+    }
 }

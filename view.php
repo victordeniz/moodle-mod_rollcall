@@ -25,7 +25,12 @@
 require(__DIR__ . '/../../config.php');
 
 $id = required_param('id', PARAM_INT);
-$filter = optional_param('filter', \mod_rollcall\output\roll_page::FILTER_ALL, PARAM_ALPHANUM);
+// Old links to the roll with a filter go to the Students tab, which now holds the roll.
+$filter = optional_param('filter', '', PARAM_ALPHANUM);
+if ($filter !== '') {
+    redirect(new moodle_url('/mod/rollcall/students.php', ['id' => $id, 'filter' => $filter]));
+}
+$filter = \mod_rollcall\output\roll_page::FILTER_ALL;
 
 [$course, $cm] = get_course_and_cm_from_cmid($id, 'rollcall');
 require_login($course, true, $cm);

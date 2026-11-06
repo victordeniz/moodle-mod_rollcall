@@ -129,7 +129,7 @@ class roll_page implements \renderable, \templatable {
         return [
             'cmid' => (int)$this->cm->id,
             'groupid' => $this->groupid,
-            'viewurl' => (new \moodle_url('/mod/rollcall/view.php'))->out(false),
+            'viewurl' => (new \moodle_url('/mod/rollcall/students.php'))->out(false),
             'canclassify' => $this->canclassify,
             'legend' => $legend,
             'categories' => array_merge([$regular], array_values($categories)),
