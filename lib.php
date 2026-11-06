@@ -99,6 +99,7 @@ function rollcall_delete_instance($id): bool {
         return false;
     }
     \mod_rollcall\local\status_manager::delete_for_rollcall((int)$id);
+    \mod_rollcall\local\session_manager::delete_for_rollcall((int)$id);
     $DB->delete_records('rollcall', ['id' => $id]);
     return true;
 }
@@ -111,6 +112,7 @@ function rollcall_delete_instance($id): bool {
 function rollcall_reset_course_form_definition(&$mform) {
     $mform->addElement('header', 'rollcallheader', get_string('modulenameplural', 'mod_rollcall'));
     $mform->addElement('advcheckbox', 'reset_rollcall_classifications', get_string('resetclassifications', 'mod_rollcall'));
+    $mform->addElement('advcheckbox', 'reset_rollcall_sessions', get_string('resetsessions', 'mod_rollcall'));
 }
 
 /**
@@ -120,11 +122,11 @@ function rollcall_reset_course_form_definition(&$mform) {
  * @return array
  */
 function rollcall_reset_course_form_defaults($course) {
-    return ['reset_rollcall_classifications' => 1];
+    return ['reset_rollcall_classifications' => 1, 'reset_rollcall_sessions' => 1];
 }
 
 /**
- * Deletes the course classifications when requested by the course reset.
+ * Deletes the course classifications and sessions when requested by the course reset.
  *
  * @param stdClass $data The reset form data
  * @return array Status array
@@ -136,6 +138,14 @@ function rollcall_reset_userdata($data) {
         $status[] = [
             'component' => get_string('modulenameplural', 'mod_rollcall'),
             'item' => get_string('resetclassifications', 'mod_rollcall'),
+            'error' => false,
+        ];
+    }
+    if (!empty($data->reset_rollcall_sessions)) {
+        \mod_rollcall\local\session_manager::delete_for_course((int)$data->courseid);
+        $status[] = [
+            'component' => get_string('modulenameplural', 'mod_rollcall'),
+            'item' => get_string('resetsessions', 'mod_rollcall'),
             'error' => false,
         ];
     }
