@@ -36,6 +36,7 @@ class restore_rollcall_activity_structure_step extends restore_activity_structur
         return $this->prepare_activity_structure([
             new restore_path_element('rollcall', '/activity/rollcall'),
             new restore_path_element('rollcall_status', '/activity/rollcall/statuses/status'),
+            new restore_path_element('rollcall_session', '/activity/rollcall/sessions/session'),
         ]);
     }
 
@@ -74,6 +75,26 @@ class restore_rollcall_activity_structure_step extends restore_activity_structur
         }
         unset($data->id);
         $DB->insert_record('rollcall_status', $data);
+    }
+
+    /**
+     * Restores a session of the roll, with a new id.
+     *
+     * The group is remapped; when it was not restored (groups excluded, or deleted) the session falls back to the
+     * whole activity. The date follows the course start date offset.
+     *
+     * @param array $data
+     */
+    protected function process_rollcall_session($data) {
+        global $DB;
+        $data = (object)$data;
+        $oldid = $data->id;
+        $data->rollcallid = $this->get_new_parentid('rollcall');
+        $data->groupid = $data->groupid > 0 ? (int)$this->get_mappingid('group', $data->groupid) : 0;
+        $data->sessdate = $this->apply_date_offset($data->sessdate);
+        unset($data->id);
+        $newid = $DB->insert_record('rollcall_session', $data);
+        $this->set_mapping('rollcall_session', $oldid, $newid);
     }
 
     /**

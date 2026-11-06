@@ -39,9 +39,17 @@ class backup_rollcall_activity_structure_step extends backup_activity_structure_
         $status = new backup_nested_element('status', ['id'], ['name', 'sortorder', 'visible', 'timecreated', 'timemodified']);
         $roll->add_child($statuses);
         $statuses->add_child($status);
+        // Sessions are activity structure, not user data: always written, like the statuses.
+        $sessions = new backup_nested_element('sessions');
+        $session = new backup_nested_element('session', ['id'],
+            ['groupid', 'name', 'sessdate', 'duration', 'timecreated', 'timemodified']);
+        $roll->add_child($sessions);
+        $sessions->add_child($session);
 
         $roll->set_source_table('rollcall', ['id' => backup::VAR_ACTIVITYID]);
         $status->set_source_table('rollcall_status', ['rollcallid' => backup::VAR_PARENTID], 'sortorder ASC, id ASC');
+        $session->set_source_table('rollcall_session', ['rollcallid' => backup::VAR_PARENTID], 'sessdate ASC, id ASC');
+        $session->annotate_ids('group', 'groupid');
         $roll->annotate_files('mod_rollcall', 'intro', null);
         return $this->prepare_activity_structure($roll);
     }

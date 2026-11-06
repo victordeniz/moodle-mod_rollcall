@@ -20,6 +20,7 @@ use backup;
 use backup_controller;
 use backup_setting;
 use mod_rollcall\local\classification;
+use mod_rollcall\local\session_manager;
 use mod_rollcall\local\status_manager;
 use mod_rollcall\persistent\status;
 use restore_controller;
@@ -38,9 +39,10 @@ final class backup_restore_test extends \advanced_testcase {
      * Backs up a course with user data and restores it into a new course.
      *
      * @param \stdClass $course
+     * @param array $restoresettings Restore plan setting values by name, applied before the precheck
      * @return int The new course id
      */
-    private function duplicate_with_userdata(\stdClass $course): int {
+    private function duplicate_with_userdata(\stdClass $course, array $restoresettings = []): int {
         global $CFG, $USER;
         require_once($CFG->dirroot . '/backup/util/includes/backup_includes.php');
         require_once($CFG->dirroot . '/backup/util/includes/restore_includes.php');
@@ -59,6 +61,10 @@ final class backup_restore_test extends \advanced_testcase {
             backup::TARGET_NEW_COURSE);
         $rc->get_plan()->get_setting('users')->set_status(backup_setting::NOT_LOCKED);
         $rc->get_plan()->get_setting('users')->set_value(true);
+        foreach ($restoresettings as $name => $value) {
+            $rc->get_plan()->get_setting($name)->set_status(backup_setting::NOT_LOCKED);
+            $rc->get_plan()->get_setting($name)->set_value($value);
+        }
         $this->assertTrue($rc->execute_precheck());
         $rc->execute_plan();
         $rc->destroy();
@@ -168,5 +174,78 @@ final class backup_restore_test extends \advanced_testcase {
 
         $this->assertSame($this->status_summary((int)$roll->id), $this->status_summary((int)$newcm->instance));
         $this->assertCount(3, status_manager::get_all((int)$newcm->instance));
+    }
+
+    /**
+     * Returns the sessions of a roll keyed by name, as [groupid, sessdate, duration].
+     *
+     * @param int $rollcallid
+     * @return array
+     */
+    private function sessions_by_name(int $rollcallid): array {
+        global $DB;
+        $out = [];
+        foreach ($DB->get_records('rollcall_session', ['rollcallid' => $rollcallid]) as $s) {
+            $out[$s->name] = [(int)$s->groupid, (int)$s->sessdate, (int)$s->duration];
+        }
+        return $out;
+    }
+
+    public function test_backup_restore_keeps_sessions_and_maps_groups(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course();
+        $group = $gen->create_group(['courseid' => $course->id, 'name' => 'G1']);
+        $roll = $gen->create_module('rollcall', ['course' => $course->id]);
+        session_manager::create((int)$roll->id, 0, 'Whole', 1700000000, 3600);
+        session_manager::create((int)$roll->id, (int)$group->id, 'Grouped', 1700100000, 1800);
+
+        $newcourseid = $this->duplicate_with_userdata($course);
+
+        $restored = $DB->get_record('rollcall', ['course' => $newcourseid], '*', MUST_EXIST);
+        $new = $this->sessions_by_name((int)$restored->id);
+        $newgroup = $DB->get_record('groups', ['courseid' => $newcourseid, 'name' => 'G1'], '*', MUST_EXIST);
+        $this->assertNotEquals($group->id, $newgroup->id);
+        $this->assertSame(['Whole' => [0, 1700000000, 3600], 'Grouped' => [(int)$newgroup->id, 1700100000, 1800]], $new);
+        // The original is untouched.
+        $this->assertSame(['Whole' => [0, 1700000000, 3600], 'Grouped' => [(int)$group->id, 1700100000, 1800]],
+            $this->sessions_by_name((int)$roll->id));
+    }
+
+    public function test_restore_into_other_course_without_groups(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course();
+        $group = $gen->create_group(['courseid' => $course->id, 'name' => 'G1']);
+        $roll = $gen->create_module('rollcall', ['course' => $course->id]);
+        session_manager::create((int)$roll->id, (int)$group->id, 'Grouped', 1700100000, 1800);
+
+        $newcourseid = $this->duplicate_with_userdata($course, ['groups' => false]);
+
+        $restored = $DB->get_record('rollcall', ['course' => $newcourseid], '*', MUST_EXIST);
+        $this->assertSame(0, $DB->count_records('groups', ['courseid' => $newcourseid]));
+        $this->assertSame(['Grouped' => [0, 1700100000, 1800]], $this->sessions_by_name((int)$restored->id));
+    }
+
+    public function test_restore_shifts_session_dates(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $gen = $this->getDataGenerator();
+        $start = 1700000000;
+        $shift = 365 * DAYSECS;
+        $course = $gen->create_course(['startdate' => $start]);
+        $roll = $gen->create_module('rollcall', ['course' => $course->id]);
+        session_manager::create((int)$roll->id, 0, 'Whole', $start + 2 * DAYSECS, 3600);
+
+        $newcourseid = $this->duplicate_with_userdata($course, ['course_startdate' => $start + $shift]);
+
+        $restored = $DB->get_record('rollcall', ['course' => $newcourseid], '*', MUST_EXIST);
+        $this->assertSame(['Whole' => [0, $start + 2 * DAYSECS + $shift, 3600]],
+            $this->sessions_by_name((int)$restored->id));
     }
 }
