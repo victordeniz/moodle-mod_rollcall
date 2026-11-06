@@ -5,8 +5,8 @@ Actividad de Moodle 5.2 para pasar lista de alumnos. Muestra al profesorado los 
 ## Qué hace (v1)
 
 - **Sesiones** (portada de la actividad, `view.php`): cada sesión tiene nombre, fecha y hora, duración y grupo («Toda la actividad» o un grupo). Se listan las más recientes primero, con selector de grupo cuando la actividad usa grupos, y se crean, editan y borran desde la portada.
-  - Al crear, el nombre propuesto es «Sesión» con la fecha de hoy en formato corto (p. ej. «Sesión 06/11/2026»), la fecha es la hora actual y la duración 60 minutos. La duración se introduce en minutos (entero entre 1 y 1440).
-  - Las sesiones de un grupo que ya no existe se conservan, con la columna «Grupo eliminado». Solo las ven y gestionan quienes tienen `moodle/site:accessallgroups`.
+  - Al crear, el nombre propuesto es «Sesión» con la fecha de hoy en el formato corto del idioma del usuario (p. ej. «Sesión 6/11/26» en el sitio en español), la fecha es la hora actual y la duración 60 minutos. La duración se introduce en minutos (entero entre 1 y 1440).
+  - Las sesiones de un grupo que ya no existe se conservan, y la columna «Grupo» muestra «Grupo eliminado». Solo las ven y gestionan quienes tienen `moodle/site:accessallgroups`.
 - **Alumnos** (pestaña *Alumnos*, `students.php`): alumnos del curso con matrícula activa y el permiso `mod/rollcall:belisted` (rol *student*), con foto, nombre, color de fila, franja lateral y etiqueta. Leyenda con recuentos, filtro por categoría y selector de grupo. Los enlaces antiguos `view.php?…&filter=…` redirigen aquí con el mismo filtro.
 - **Clasificar** (profesor con edición): desplegable en cada fila, que guarda al momento, y acción en bloque sobre los alumnos seleccionados. La clasificación es **por curso**: todas las instancias de un curso la comparten.
 - **Catálogo** (*Administración del sitio › Extensiones › Módulos de actividad › Lista de clase › Categorías de alumno*): crear, editar, ordenar, ocultar y borrar categorías. El color se elige de una paleta fija de 8. Una categoría con alumnos no se puede borrar, solo ocultar. Si se oculta, sus alumnos se muestran como regulares, pero la clasificación se conserva.
@@ -28,11 +28,11 @@ Quién puede crear, editar o borrar una sesión de grupo `g` (`g = 0` es «Toda 
 - Hace falta `mod/rollcall:managesessions`.
 - Si la actividad no usa grupos, basta con esa capacidad.
 - Si la actividad usa grupos (separados o visibles):
-  - `g = 0`: solo con `moodle/site:accessallgroups`. Todos los participantes ven la sesión, pero solo esos usuarios la gestionan.
-  - `g > 0`: con `moodle/site:accessallgroups`, o si el usuario es miembro de `g`. Si la actividad tiene agrupamiento, el grupo tiene que pertenecer a él.
+  - `g = 0`: solo con `moodle/site:accessallgroups`. La ven quienes pueden ver la actividad (`mod/rollcall:view`), profesorado incluido. En grupos separados, un usuario sin `accessallgroups` la ve junto a las sesiones del grupo que ha elegido en el selector, que tiene que ser uno de sus grupos.
+  - `g > 0`: con `moodle/site:accessallgroups`, o, sin ese permiso, si el usuario es miembro de `g`. Si la actividad tiene agrupamiento, el grupo tiene que pertenecer a él (esta comprobación solo aplica a quien gestiona por pertenencia al grupo).
   - En grupos visibles, un profesor ve las sesiones de otros grupos, pero no puede gestionarlas.
 
-La regla está en un solo sitio (`\mod_rollcall\local\session_manager::can_manage()`), y la usan la portada, las páginas de edición y borrado, y los tests.
+La regla está en un solo sitio (`\mod_rollcall\local\session_manager::can_manage()`). `can_create()` usa la capacidad y las opciones de grupo para decidir si la portada muestra el botón «Nueva sesión» y si se puede abrir el formulario de alta. La portada usa `can_manage()` para mostrar editar y borrar en cada sesión, y el formulario de edición y la página de borrado (`view.php`) lo comprueban antes de guardar o borrar.
 
 ## Permisos
 
