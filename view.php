@@ -49,6 +49,9 @@ $PAGE->set_url($url);
 $PAGE->set_title(format_string($roll->name));
 $PAGE->set_heading(format_string($course->fullname));
 
+if ($action !== '' && $action !== 'delete') {
+    throw new moodle_exception('invalidaction', 'error');
+}
 if ($action === 'delete') {
     require_sesskey();
     $session = session_manager::get_for_rollcall($sessionid, (int)$cm->instance);

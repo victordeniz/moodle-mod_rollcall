@@ -54,6 +54,7 @@ $string['defaultstatus_absent'] = 'Absent';
 $string['defaultstatus_late'] = 'Late';
 $string['defaultstatus_present'] = 'Present';
 $string['deletedgroup'] = 'Deleted group';
+$string['duration'] = 'Duration';
 $string['durationminutes'] = 'Duration (minutes)';
 $string['editcategory'] = 'Edit category';
 $string['editsession'] = 'Edit session';

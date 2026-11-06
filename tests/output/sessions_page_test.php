@@ -76,6 +76,11 @@ final class sessions_page_test extends \advanced_testcase {
         $this->assertNull($data['rows'][1]['deleteurl']);
         $this->assertNotNull($data['addurl']);
 
+        // Rendering through the template must not trigger debugging (e.g. missing strings).
+        $html = $PAGE->get_renderer('core')->render(new sessions_page($cm, (int)$g1->id, 0));
+        $this->assertStringContainsString('A &amp; B', $html);
+        $this->assertDebuggingNotCalled();
+
         $this->setUser($student);
         $this->assertFalse(session_manager::can_create($cm));
 

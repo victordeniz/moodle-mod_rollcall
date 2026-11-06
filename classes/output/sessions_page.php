@@ -76,6 +76,7 @@ class sessions_page implements \renderable, \templatable {
                 'editurl' => $canmanage ? (new \moodle_url('/mod/rollcall/editsession.php', [
                     'id' => $cm->id,
                     'sessionid' => $id,
+                    'group' => $this->groupid,
                 ]))->out(false) : null,
                 'deleteurl' => $canmanage ? (new \moodle_url('/mod/rollcall/view.php', [
                     'id' => $cm->id,
