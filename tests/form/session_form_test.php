@@ -85,4 +85,25 @@ final class session_form_test extends \advanced_testcase {
         $form = $this->submit($custom, ['groupid' => '5']);
         $this->assertNotNull($form->get_data());
     }
+
+    /**
+     * Tests that the browser only lets digits into the duration field.
+     */
+    public function test_duration_field_accepts_only_digits_in_browser(): void {
+        $this->resetAfterTest();
+        $form = $this->submit(['groupoptions' => [], 'requiregroupchoice' => false], []);
+        $property = new \ReflectionProperty(\moodleform::class, '_form');
+        $mform = $property->getValue($form);
+
+        $element = $mform->getElement('durationminutes');
+        $this->assertSame('numeric', $element->getAttribute('inputmode'));
+        $this->assertSame('[0-9]*', $element->getAttribute('pattern'));
+        $this->assertSame('4', (string)$element->getAttribute('maxlength'));
+
+        $rules = $mform->_rules['durationminutes'];
+        $regex = array_values(array_filter($rules, fn($rule) => $rule['type'] === 'regex'));
+        $this->assertCount(1, $regex);
+        $this->assertSame('/^[0-9]+$/', $regex[0]['format']);
+        $this->assertSame('client', $regex[0]['validation']);
+    }
 }

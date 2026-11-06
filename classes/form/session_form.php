@@ -51,9 +51,12 @@ class session_form extends \moodleform {
         $mform->addElement('date_time_selector', 'sessdate', get_string('sessiondate', 'mod_rollcall'));
 
         // Raw text, so that "1.5" or "abc" are not silently cleaned into an integer before validation.
-        $mform->addElement('text', 'durationminutes', get_string('durationminutes', 'mod_rollcall'), ['size' => 5]);
+        // The HTML5 pattern and the client regex rule stop the browser submitting anything but digits.
+        $mform->addElement('text', 'durationminutes', get_string('durationminutes', 'mod_rollcall'),
+            ['size' => 5, 'maxlength' => 4, 'inputmode' => 'numeric', 'pattern' => '[0-9]*']);
         $mform->setType('durationminutes', PARAM_RAW_TRIMMED);
         $mform->addRule('durationminutes', null, 'required', null, 'client');
+        $mform->addRule('durationminutes', get_string('invalidduration', 'mod_rollcall'), 'regex', '/^[0-9]+$/', 'client');
 
         if (!empty($groupoptions)) {
             if ($requiregroupchoice) {
