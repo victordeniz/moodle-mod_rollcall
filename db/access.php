@@ -58,6 +58,16 @@ $capabilities = [
         ],
     ],
 
+    // Create, edit, reorder, hide and delete the attendance statuses of the roll.
+    'mod/rollcall:managestatuses' => [
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => [
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+
     // Be listed as a student in the roll.
     'mod/rollcall:belisted' => [
         'captype' => 'read',

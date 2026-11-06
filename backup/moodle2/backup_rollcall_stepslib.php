@@ -24,7 +24,7 @@
  */
 
 /**
- * Defines the structure of a roll backup: only the activity instance.
+ * Defines the structure of a roll backup: the activity instance and its attendance statuses.
  */
 class backup_rollcall_activity_structure_step extends backup_activity_structure_step {
     /**
@@ -34,7 +34,14 @@ class backup_rollcall_activity_structure_step extends backup_activity_structure_
      */
     protected function define_structure() {
         $roll = new backup_nested_element('rollcall', ['id'], ['name', 'intro', 'introformat', 'timecreated', 'timemodified']);
+        // The statuses wrapper is always written, so an activity without statuses restores without statuses.
+        $statuses = new backup_nested_element('statuses');
+        $status = new backup_nested_element('status', ['id'], ['name', 'sortorder', 'visible', 'timecreated', 'timemodified']);
+        $roll->add_child($statuses);
+        $statuses->add_child($status);
+
         $roll->set_source_table('rollcall', ['id' => backup::VAR_ACTIVITYID]);
+        $status->set_source_table('rollcall_status', ['rollcallid' => backup::VAR_PARENTID], 'sortorder ASC, id ASC');
         $roll->annotate_files('mod_rollcall', 'intro', null);
         return $this->prepare_activity_structure($roll);
     }
