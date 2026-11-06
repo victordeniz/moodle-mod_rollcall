@@ -50,5 +50,25 @@ function xmldb_rollcall_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2026110501, 'rollcall');
     }
 
+    if ($oldversion < 2026110600) {
+        // Sessions of a roll.
+        $table = new xmldb_table('rollcall_session');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('rollcallid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('groupid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('name', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('sessdate', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('duration', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('rollcallid', XMLDB_KEY_FOREIGN, ['rollcallid'], 'rollcall', ['id']);
+        $table->add_index('rollcallid-groupid', XMLDB_INDEX_NOTUNIQUE, ['rollcallid', 'groupid']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+        upgrade_mod_savepoint(true, 2026110600, 'rollcall');
+    }
+
     return true;
 }

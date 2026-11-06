@@ -63,6 +63,7 @@ $string['filter'] = 'Show';
 $string['filterall'] = 'All students';
 $string['invalidcategory'] = 'Invalid category.';
 $string['invalidcolor'] = 'The colour is not in the palette.';
+$string['invalidduration'] = 'The duration must be between 1 and 1440 minutes.';
 $string['invalidstatus'] = 'Invalid attendance status.';
 $string['legend'] = 'Students per category';
 $string['managecategories'] = 'Student categories';

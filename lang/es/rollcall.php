@@ -63,6 +63,7 @@ $string['filter'] = 'Mostrar';
 $string['filterall'] = 'Todos los alumnos';
 $string['invalidcategory'] = 'Categoría no válida.';
 $string['invalidcolor'] = 'El color no está en la paleta.';
+$string['invalidduration'] = 'La duración debe estar entre 1 y 1440 minutos.';
 $string['invalidstatus'] = 'Estado de asistencia no válido.';
 $string['legend'] = 'Alumnos por categoría';
 $string['managecategories'] = 'Categorías de alumno';
