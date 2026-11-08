@@ -12,6 +12,8 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 namespace mod_rollcall\local;
 
 use mod_rollcall\event\attendance_updated;
@@ -72,6 +74,7 @@ class attendance_manager {
         global $DB;
 
         $userids = array_values(array_unique(array_map('intval', $userids)));
+        $transaction = $DB->start_delegated_transaction();
         $current = self::get_for_users($sessionid, $userids);
         $result = [];
         foreach ($userids as $userid) {
@@ -83,16 +86,28 @@ class attendance_manager {
 
             if ($statusid === 0) {
                 $DB->delete_records(attendance::TABLE, ['sessionid' => $sessionid, 'userid' => $userid]);
-            } else if ($before === 0) {
-                (new attendance(0, (object)[
-                    'sessionid' => $sessionid,
-                    'userid' => $userid,
-                    'statusid' => $statusid,
-                ]))->create();
             } else {
-                $record = attendance::get_record(['sessionid' => $sessionid, 'userid' => $userid]);
-                $record->set('statusid', $statusid);
-                $record->update();
+                $record = $before === 0 ? false : attendance::get_record(['sessionid' => $sessionid, 'userid' => $userid]);
+                if (!$record) {
+                    // No row (or it vanished meanwhile): create it, unless a concurrent request did first.
+                    try {
+                        (new attendance(0, (object)[
+                            'sessionid' => $sessionid,
+                            'userid' => $userid,
+                            'statusid' => $statusid,
+                        ]))->create();
+                    } catch (\dml_write_exception $e) {
+                        $record = attendance::get_record(['sessionid' => $sessionid, 'userid' => $userid]);
+                        if (!$record) {
+                            throw $e;
+                        }
+                    }
+                }
+                if ($record) {
+                    // Last write wins.
+                    $record->set('statusid', $statusid);
+                    $record->update();
+                }
             }
 
             if ($context) {
@@ -104,6 +119,7 @@ class attendance_manager {
                 ])->trigger();
             }
         }
+        $transaction->allow_commit();
         return $result;
     }
 

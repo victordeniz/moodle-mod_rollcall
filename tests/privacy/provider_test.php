@@ -83,6 +83,13 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         $this->assertContains('rollcall_usercat', $tables);
         $this->assertContains('rollcall_category', $tables);
         $this->assertContains('rollcall_attendance', $tables);
+        foreach ($collection->get_collection() as $item) {
+            if ($item->get_name() === 'rollcall_attendance') {
+                $fields = array_keys($item->get_privacy_fields());
+                sort($fields);
+                $this->assertSame(['sessionid', 'statusid', 'timecreated', 'timemodified', 'userid'], $fields);
+            }
+        }
     }
 
     public function test_get_contexts_for_userid(): void {

@@ -207,6 +207,7 @@ class session_manager {
      *
      * It is the group of the session, or 0 if the session is for the whole activity or its group
      * no longer exists in the course.
+     * A deleted group returns 0, which means all the students, so callers must check can_take() first.
      *
      * @param \cm_info $cm
      * @param session $session

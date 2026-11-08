@@ -18,6 +18,7 @@ namespace mod_rollcall\local;
 use mod_rollcall\event\status_created;
 use mod_rollcall\event\status_deleted;
 use mod_rollcall\event\status_updated;
+use mod_rollcall\persistent\attendance;
 use mod_rollcall\persistent\status;
 
 /**
@@ -164,7 +165,7 @@ class status_manager {
      */
     public static function is_in_use(int $id): bool {
         global $DB;
-        return $DB->record_exists('rollcall_attendance', ['statusid' => $id]);
+        return $DB->record_exists(attendance::TABLE, ['statusid' => $id]);
     }
 
     /**

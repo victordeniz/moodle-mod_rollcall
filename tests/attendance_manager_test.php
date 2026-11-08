@@ -12,6 +12,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace mod_rollcall;
 
@@ -73,6 +74,29 @@ final class attendance_manager_test extends \advanced_testcase {
         $this->assertSame([$u1 => 0, $u3 => 0], attendance_manager::set($s, 0, [$u1, $u3]));
         $this->assertSame(1, $DB->count_records('rollcall_attendance', ['sessionid' => $s]));
         $this->assertTrue($DB->record_exists('rollcall_attendance', ['sessionid' => $s, 'userid' => $u2]));
+    }
+
+    public function test_bulk_set_writes_all_rows(): void {
+        $this->resetAfterTest();
+        [$roll, $sessionid, $a, $b, $users] = $this->setup_roll();
+
+        $result = attendance_manager::set($sessionid, $a, $users);
+        $this->assertSame(array_fill_keys($users, $a), $result);
+        $this->assertSame(array_fill_keys($users, $a), attendance_manager::get_for_users($sessionid, $users));
+        $this->assertSame(3, attendance_manager::count_for_session($sessionid));
+
+        attendance_manager::set($sessionid, $b, $users);
+        $this->assertSame(array_fill_keys($users, $b), attendance_manager::get_for_users($sessionid, $users));
+    }
+
+    public function test_set_creates_the_row_after_it_was_deleted(): void {
+        global $DB;
+        $this->resetAfterTest();
+        [$roll, $sessionid, $a, $b, $users] = $this->setup_roll();
+        attendance_manager::set($sessionid, $a, [$users[0]]);
+        $DB->delete_records('rollcall_attendance', ['sessionid' => $sessionid]);
+        $this->assertSame([$users[0] => $b], attendance_manager::set($sessionid, $b, [$users[0]]));
+        $this->assertSame([$users[0] => $b], attendance_manager::get_for_users($sessionid, [$users[0]]));
     }
 
     public function test_set_triggers_one_event_per_changed_student(): void {

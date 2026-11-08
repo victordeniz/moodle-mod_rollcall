@@ -57,8 +57,10 @@ class provider implements
             'timemodified' => 'privacy:metadata:rollcall_category:timemodified',
         ], 'privacy:metadata:rollcall_category');
         $collection->add_database_table('rollcall_attendance', [
+            'sessionid' => 'privacy:metadata:rollcall_attendance:sessionid',
             'userid' => 'privacy:metadata:rollcall_attendance:userid',
             'statusid' => 'privacy:metadata:rollcall_attendance:statusid',
+            'timecreated' => 'privacy:metadata:rollcall_attendance:timecreated',
             'timemodified' => 'privacy:metadata:rollcall_attendance:timemodified',
         ], 'privacy:metadata:rollcall_attendance');
         return $collection;

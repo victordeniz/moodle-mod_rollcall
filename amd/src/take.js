@@ -14,8 +14,6 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
-
-/**
  * Saves the attendance of a session, one student at a time or in bulk.
  *
  * @module     mod_rollcall/take

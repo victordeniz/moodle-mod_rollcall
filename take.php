@@ -25,7 +25,6 @@
 require(__DIR__ . '/../../config.php');
 
 use mod_rollcall\local\session_manager;
-use mod_rollcall\local\status_manager;
 use mod_rollcall\output\roll_page;
 use mod_rollcall\output\take_page;
 
@@ -46,7 +45,6 @@ $session = session_manager::get_for_rollcall($sessionid, $rollcallid);
 if (!session_manager::can_take($cm, $session)) {
     throw new required_capability_exception($context, 'mod/rollcall:takeattendance', 'nopermissions', '');
 }
-$roll = $DB->get_record('rollcall', ['id' => $rollcallid], '*', MUST_EXIST);
 
 $url = new moodle_url('/mod/rollcall/take.php', ['sessionid' => $sessionid]);
 foreach (['filter' => $filter, 'sort' => $sort, 'dir' => $dir, 'page' => $page] as $name => $value) {
@@ -65,9 +63,9 @@ $PAGE->navbar->add($sessionname);
 $perpage = (int)get_config('mod_rollcall', 'perpage') ?: 25;
 $renderable = new take_page($cm, $session, $filter, $sort, $dir, $page, $perpage);
 
-if (!empty(status_manager::get_visible($rollcallid))) {
-    $PAGE->requires->js_call_amd('mod_rollcall/take', 'init', [$cm->id, $sessionid]);
-}
+// Always started: it does nothing without a table, and with students the per-row control can still clear
+// a status that is now hidden even when there are no visible statuses left.
+$PAGE->requires->js_call_amd('mod_rollcall/take', 'init', [$cm->id, $sessionid]);
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('takeattendance', 'mod_rollcall'));
