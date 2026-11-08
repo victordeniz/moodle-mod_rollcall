@@ -86,7 +86,7 @@ class set_attendance extends external_api {
             throw new \required_capability_exception($context, 'mod/rollcall:takeattendance', 'nopermissions', '');
         }
 
-        if ($statusid > 0) {
+        if ($statusid !== 0) {
             $status = status_manager::get_for_rollcall($statusid, (int)$cm->instance);
             if (!$status->get('visible')) {
                 throw new \moodle_exception('invalidstatus', 'mod_rollcall');

@@ -138,7 +138,8 @@ final class set_attendance_test extends \core_external\tests\externallib_testcas
             case 'student':
                 // Students cannot even view the roll; grant it so the take attendance check is what rejects them.
                 $studentrole = $DB->get_field('role', 'id', ['shortname' => 'student']);
-                assign_capability('mod/rollcall:view', CAP_ALLOW, $studentrole, \context_module::instance($this->roll->cmid)->id, true);
+                $modcontextid = \context_module::instance($this->roll->cmid)->id;
+                assign_capability('mod/rollcall:view', CAP_ALLOW, $studentrole, $modcontextid, true);
                 $this->setUser($this->student);
                 break;
             case 'othergroupsession':
@@ -146,6 +147,9 @@ final class set_attendance_test extends \core_external\tests\externallib_testcas
                 break;
             case 'usernotlisted':
                 $userids = [$this->u1->id, $this->other->id];
+                break;
+            case 'negativestatus':
+                $stid = -1;
                 break;
             case 'hiddenstatus':
                 status_manager::set_visible($stid, false);
@@ -182,6 +186,7 @@ final class set_attendance_test extends \core_external\tests\externallib_testcas
             'student' => ['student', \required_capability_exception::class, null],
             'session of another group' => ['othergroupsession', \required_capability_exception::class, null],
             'user not listed' => ['usernotlisted', \moodle_exception::class, 'usernotlisted'],
+            'negative status' => ['negativestatus', \moodle_exception::class, 'invalidstatus'],
             'hidden status' => ['hiddenstatus', \moodle_exception::class, 'invalidstatus'],
             'status of another roll' => ['otherrollstatus', \moodle_exception::class, 'invalidstatus'],
             'session of another roll' => ['otherrollsession', \moodle_exception::class, 'invalidsession'],
