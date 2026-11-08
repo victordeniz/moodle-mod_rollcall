@@ -110,6 +110,7 @@ $string['rollcall:belisted'] = 'Be listed as a student in the roll';
 $string['rollcall:classify'] = 'Classify students';
 $string['rollcall:managesessions'] = 'Manage the sessions';
 $string['rollcall:managestatuses'] = 'Manage the attendance statuses';
+$string['rollcall:takeattendance'] = 'Take attendance';
 $string['rollcall:view'] = 'View the roll';
 $string['saved'] = 'Saved';
 $string['selectall'] = 'Select all students';
