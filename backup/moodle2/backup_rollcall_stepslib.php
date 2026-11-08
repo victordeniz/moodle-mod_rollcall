@@ -45,11 +45,21 @@ class backup_rollcall_activity_structure_step extends backup_activity_structure_
             ['groupid', 'name', 'sessdate', 'duration', 'timecreated', 'timemodified']);
         $roll->add_child($sessions);
         $sessions->add_child($session);
+        // Attendance is personal data: only written with user data.
+        $attendances = new backup_nested_element('attendances');
+        $attendance = new backup_nested_element('attendance', ['id'],
+            ['userid', 'statusid', 'timecreated', 'timemodified']);
+        $session->add_child($attendances);
+        $attendances->add_child($attendance);
 
         $roll->set_source_table('rollcall', ['id' => backup::VAR_ACTIVITYID]);
         $status->set_source_table('rollcall_status', ['rollcallid' => backup::VAR_PARENTID], 'sortorder ASC, id ASC');
         $session->set_source_table('rollcall_session', ['rollcallid' => backup::VAR_PARENTID], 'sessdate ASC, id ASC');
         $session->annotate_ids('group', 'groupid');
+        if ($this->get_setting_value('userinfo')) {
+            $attendance->set_source_table('rollcall_attendance', ['sessionid' => backup::VAR_PARENTID], 'id ASC');
+            $attendance->annotate_ids('user', 'userid');
+        }
         $roll->annotate_files('mod_rollcall', 'intro', null);
         return $this->prepare_activity_structure($roll);
     }

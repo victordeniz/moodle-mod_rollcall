@@ -28,7 +28,7 @@ use core_privacy\local\request\writer;
  * Privacy provider for mod_rollcall.
  *
  * Classifications belong to the course, so their data lives in the course context. The category catalogue only
- * stores who last modified each category, in the system context.
+ * stores who last modified each category, in the system context. Attendance belongs to each activity.
  *
  * @package    mod_rollcall
  * @copyright  2026 Victor Deniz <fitodeniz@gmail.com>
@@ -56,6 +56,11 @@ class provider implements
             'usermodified' => 'privacy:metadata:rollcall_category:usermodified',
             'timemodified' => 'privacy:metadata:rollcall_category:timemodified',
         ], 'privacy:metadata:rollcall_category');
+        $collection->add_database_table('rollcall_attendance', [
+            'userid' => 'privacy:metadata:rollcall_attendance:userid',
+            'statusid' => 'privacy:metadata:rollcall_attendance:statusid',
+            'timemodified' => 'privacy:metadata:rollcall_attendance:timemodified',
+        ], 'privacy:metadata:rollcall_attendance');
         return $collection;
     }
 
@@ -84,6 +89,17 @@ class provider implements
             'systemlevel' => CONTEXT_SYSTEM,
             'userid' => $userid,
         ]);
+        $contextlist->add_from_sql("
+            SELECT ctx.id
+              FROM {rollcall_attendance} a
+              JOIN {rollcall_session} s ON s.id = a.sessionid
+              JOIN {modules} m ON m.name = 'rollcall'
+              JOIN {course_modules} cm ON cm.instance = s.rollcallid AND cm.module = m.id
+              JOIN {context} ctx ON ctx.instanceid = cm.id AND ctx.contextlevel = :modlevel
+             WHERE a.userid = :userid", [
+            'modlevel' => CONTEXT_MODULE,
+            'userid' => $userid,
+        ]);
         return $contextlist;
     }
 
@@ -102,6 +118,14 @@ class provider implements
         } else if ($context instanceof \context_system) {
             $userlist->add_from_sql('usermodified',
                 'SELECT usermodified FROM {rollcall_category} WHERE usermodified <> 0', []);
+        } else if ($context instanceof \context_module) {
+            $cm = get_coursemodule_from_id('rollcall', $context->instanceid);
+            if ($cm) {
+                $userlist->add_from_sql('userid', 'SELECT a.userid
+                      FROM {rollcall_attendance} a
+                      JOIN {rollcall_session} s ON s.id = a.sessionid
+                     WHERE s.rollcallid = :rollcallid', ['rollcallid' => $cm->instance]);
+            }
         }
     }
 
@@ -144,6 +168,28 @@ class provider implements
             } else if ($context instanceof \context_system) {
                 $names = $DB->get_fieldset_select('rollcall_category', 'name', 'usermodified = ?', [$userid]);
                 writer::with_context($context)->export_data($path, (object)['categoriesmodified' => $names]);
+            } else if ($context instanceof \context_module) {
+                $cm = get_coursemodule_from_id('rollcall', $context->instanceid);
+                if (!$cm) {
+                    continue;
+                }
+                $sql = "SELECT a.id, s.name AS sessionname, s.sessdate, st.name AS statusname, a.timemodified
+                          FROM {rollcall_attendance} a
+                          JOIN {rollcall_session} s ON s.id = a.sessionid
+                          JOIN {rollcall_status} st ON st.id = a.statusid
+                         WHERE s.rollcallid = :rollcallid AND a.userid = :userid
+                      ORDER BY s.sessdate ASC, s.id ASC";
+                $attendance = [];
+                foreach ($DB->get_records_sql($sql, ['rollcallid' => $cm->instance, 'userid' => $userid]) as $row) {
+                    $attendance[] = (object)[
+                        'session' => format_string($row->sessionname, true, ['context' => $context]),
+                        'sessiondate' => transform::datetime($row->sessdate),
+                        'status' => format_string($row->statusname, true, ['context' => $context]),
+                        'timemodified' => transform::datetime($row->timemodified),
+                    ];
+                }
+                writer::with_context($context)->export_data([get_string('privacy:pathattendance', 'mod_rollcall')],
+                    (object)['attendance' => $attendance]);
             }
         }
     }
@@ -159,6 +205,11 @@ class provider implements
             \mod_rollcall\local\classification::delete_for_course((int)$context->instanceid);
         } else if ($context instanceof \context_system) {
             $DB->set_field('rollcall_category', 'usermodified', 0);
+        } else if ($context instanceof \context_module) {
+            $cm = get_coursemodule_from_id('rollcall', $context->instanceid);
+            if ($cm) {
+                \mod_rollcall\local\attendance_manager::delete_for_rollcall((int)$cm->instance);
+            }
         }
     }
 
@@ -202,6 +253,14 @@ class provider implements
                 $params);
         } else if ($context instanceof \context_system) {
             $DB->set_field_select('rollcall_category', 'usermodified', 0, "usermodified $insql", $params);
+        } else if ($context instanceof \context_module) {
+            $cm = get_coursemodule_from_id('rollcall', $context->instanceid);
+            if ($cm) {
+                $params['rollcallid'] = $cm->instance;
+                $DB->delete_records_select('rollcall_attendance',
+                    "userid $insql AND sessionid IN (SELECT id FROM {rollcall_session} WHERE rollcallid = :rollcallid)",
+                    $params);
+            }
         }
     }
 }
