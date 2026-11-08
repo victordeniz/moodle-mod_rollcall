@@ -25,6 +25,7 @@
 require(__DIR__ . '/../../config.php');
 
 use core\output\notification;
+use mod_rollcall\local\attendance_manager;
 use mod_rollcall\local\session_manager;
 
 $id = required_param('id', PARAM_INT);
@@ -63,8 +64,13 @@ if ($action === 'delete') {
     if (!$confirm) {
         $PAGE->set_url(new moodle_url($url, ['action' => 'delete', 'sessionid' => $sessionid]));
         echo $OUTPUT->header();
+        $sessionname = format_string($session->get('name'), true, ['context' => $context]);
+        $recorded = attendance_manager::count_for_session($sessionid);
+        $message = $recorded > 0
+            ? get_string('confirmdeletesessionwithattendance', 'mod_rollcall', (object)['name' => $sessionname, 'count' => $recorded])
+            : get_string('confirmdeletesession', 'mod_rollcall', $sessionname);
         echo $OUTPUT->confirm(
-            get_string('confirmdeletesession', 'mod_rollcall', format_string($session->get('name'), true, ['context' => $context])),
+            $message,
             new moodle_url($url, [
                 'action' => 'delete',
                 'sessionid' => $sessionid,

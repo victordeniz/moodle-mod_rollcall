@@ -92,4 +92,44 @@ final class sessions_page_test extends \advanced_testcase {
         $this->assertSame(get_string('deletedgroup', 'mod_rollcall'), $data['rows'][0]['group']);
         $this->assertNotNull($data['rows'][0]['editurl']);
     }
+
+    /**
+     * Tests the take attendance link follows the group rule.
+     */
+    public function test_sessions_page_take_link(): void {
+        global $DB, $PAGE;
+        $this->resetAfterTest();
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course();
+        $roll = $gen->create_module('rollcall', ['course' => $course->id]);
+        $g1 = $gen->create_group(['courseid' => $course->id, 'name' => 'G1']);
+        $g2 = $gen->create_group(['courseid' => $course->id, 'name' => 'G2']);
+        $teacher = $gen->create_and_enrol($course, 'teacher');
+        $gen->create_group_member(['groupid' => $g1->id, 'userid' => $teacher->id]);
+        $DB->set_field('course_modules', 'groupmode', SEPARATEGROUPS, ['id' => $roll->cmid]);
+        rebuild_course_cache($course->id, true);
+        $cm = get_fast_modinfo($course->id)->get_cm($roll->cmid);
+
+        $mine = session_manager::create((int)$roll->id, (int)$g1->id, 'Mine', 1000, 3600);
+        session_manager::create((int)$roll->id, (int)$g2->id, 'Other', 2000, 3600);
+
+        $this->setUser($teacher);
+        $renderer = $PAGE->get_renderer('core');
+        $data = (new sessions_page($cm, (int)$g1->id, 0))->export_for_template($renderer);
+        $this->assertCount(1, $data['rows']);
+        $this->assertStringContainsString('take.php', $data['rows'][0]['takeurl']);
+        $this->assertStringContainsString('sessionid=' . $mine->get('id'), $data['rows'][0]['takeurl']);
+
+        // As a manager in the other group's view the link exists; the teacher cannot take the other group.
+        $this->setAdminUser();
+        $data = (new sessions_page($cm, 0, 0))->export_for_template($renderer);
+        $this->assertNotNull($data['rows'][0]['takeurl']);
+        $this->assertNotNull($data['rows'][1]['takeurl']);
+        $this->setUser($teacher);
+        $other = session_manager::get_for_rollcall(
+            (int)$DB->get_field('rollcall_session', 'id', ['name' => 'Other']),
+            (int)$roll->id
+        );
+        $this->assertFalse(session_manager::can_take($cm, $other));
+    }
 }

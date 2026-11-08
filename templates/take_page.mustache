@@ -1,0 +1,159 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+{{!
+    @template mod_rollcall/take_page
+
+    Take attendance of a session: one row per student with the status to record.
+
+    Classes required for JS:
+    * none (the JS uses the data-region and data-action attributes)
+
+    The controls are rendered disabled; mod_rollcall/take enables them once it is ready,
+    so nothing can be changed before it can be saved.
+
+    Context variables required for this template:
+    * cmid - course module id
+    * sessionid - session id
+    * sessionname, sessiondate, duration, groupname - session details
+    * backurl - URL of the sessions page
+    * takeurl - URL of take.php (action of the filter form)
+    * sort, dir - current sort field and direction
+    * filters - list of {value, name, selected}
+    * sortlinks - list of {name, url, active, dir, arrow}
+    * rows - list of {userid, fullname, picture, categoryname, color, hascategory, statusid, options}
+    * bulkstatuses - list of {id, name}, "No status" (id 0) first
+    * pagingbar - HTML of the paging bar
+    * hasstatuses - whether there are visible statuses
+    * managestatusesurl - URL of the statuses page, null if the user cannot manage them
+    * empty - whether there are no rows
+
+    Example context (json):
+    {
+        "cmid": 6,
+        "sessionid": 3,
+        "sessionname": "Session 06/11/26",
+        "sessiondate": "6 November 2026, 10:00",
+        "duration": "1 hour",
+        "groupname": "Whole activity",
+        "backurl": "https://example.com/mod/rollcall/view.php?id=6",
+        "takeurl": "https://example.com/mod/rollcall/take.php",
+        "sort": "lastname",
+        "dir": "asc",
+        "filters": [
+            {"value": "all", "name": "All students", "selected": true},
+            {"value": "regular", "name": "Regular", "selected": false}
+        ],
+        "sortlinks": [
+            {"name": "First name", "url": "#", "active": false, "dir": "", "arrow": ""},
+            {"name": "Last name", "url": "#", "active": true, "dir": "asc", "arrow": "▲"}
+        ],
+        "rows": [
+            {"userid": 3, "fullname": "Ana Álvarez", "picture": "", "categoryname": "Repeater", "color": "amber",
+             "hascategory": true, "statusid": 1,
+             "options": [{"id": 0, "name": "No status", "selected": false}, {"id": 1, "name": "Present", "selected": true}]}
+        ],
+        "bulkstatuses": [{"id": 0, "name": "No status"}, {"id": 1, "name": "Present"}],
+        "pagingbar": "",
+        "hasstatuses": true,
+        "managestatusesurl": null,
+        "empty": false
+    }
+}}
+<div class="mod_rollcall-take" data-region="mod_rollcall-take" data-cmid="{{cmid}}" data-sessionid="{{sessionid}}">
+    <h3 class="h4">{{{sessionname}}}</h3>
+    <p class="text-muted">{{sessiondate}} &middot; {{duration}} &middot; {{{groupname}}}</p>
+    <p><a href="{{backurl}}">{{#str}}backtosessions, mod_rollcall{{/str}}</a></p>
+
+    {{^hasstatuses}}
+    <p class="alert alert-warning">
+        {{#str}}nostatusesvisible, mod_rollcall{{/str}}
+        {{#managestatusesurl}}<a href="{{managestatusesurl}}">{{#str}}statuses, mod_rollcall{{/str}}</a>{{/managestatusesurl}}
+    </p>
+    {{/hasstatuses}}
+
+    <form method="get" action="{{takeurl}}" class="d-flex flex-wrap gap-2 align-items-center mb-3">
+        <input type="hidden" name="sessionid" value="{{sessionid}}">
+        <input type="hidden" name="sort" value="{{sort}}">
+        <input type="hidden" name="dir" value="{{dir}}">
+        <label for="mod_rollcall-filter-{{uniqid}}" class="mb-0">{{#str}}filter, mod_rollcall{{/str}}</label>
+        <select id="mod_rollcall-filter-{{uniqid}}" name="filter" class="form-select w-auto">
+            {{#filters}}
+            <option value="{{value}}"{{#selected}} selected{{/selected}}>{{{name}}}</option>
+            {{/filters}}
+        </select>
+        <button type="submit" class="btn btn-secondary">{{#str}}apply, mod_rollcall{{/str}}</button>
+    </form>
+
+    {{#empty}}
+    <p class="alert alert-info">{{#str}}nostudents, mod_rollcall{{/str}}</p>
+    {{/empty}}
+    {{^empty}}
+    <table class="table generaltable mod_rollcall-table" data-region="mod_rollcall-take-table">
+        <thead>
+            <tr>
+                <th scope="col" class="mod_rollcall-select">
+                    <input type="checkbox" class="form-check-input" data-action="selectall" autocomplete="off" disabled
+                        aria-label="{{#str}}selectall, mod_rollcall{{/str}}">
+                </th>
+                <th scope="col">
+                    {{#sortlinks}}
+                    <a href="{{url}}"{{#active}} aria-current="true"{{/active}} class="me-2">{{name}}{{#active}} <span aria-hidden="true">{{arrow}}</span>{{/active}}</a>
+                    {{/sortlinks}}
+                </th>
+                <th scope="col">{{#str}}category, mod_rollcall{{/str}}</th>
+                <th scope="col">{{#str}}status, mod_rollcall{{/str}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#rows}}
+            <tr data-userid="{{userid}}" data-statusid="{{statusid}}"{{#color}} class="mod_rollcall-row-{{color}}"{{/color}}>
+                <td class="mod_rollcall-select">
+                    <input type="checkbox" class="form-check-input" data-action="select" value="{{userid}}" autocomplete="off" disabled
+                        aria-label="{{#str}}selectuser, mod_rollcall, {{fullname}}{{/str}}">
+                </td>
+                <td>
+                    {{{picture}}}
+                    <span class="mod_rollcall-fullname">{{fullname}}</span>
+                </td>
+                <td>
+                    {{#hascategory}}<span class="badge{{#color}} mod_rollcall-badge-{{color}}{{/color}}">{{{categoryname}}}</span>{{/hascategory}}
+                </td>
+                <td>
+                    <select class="form-select form-select-sm w-auto" data-action="setstatus" autocomplete="off" disabled
+                        aria-label="{{#str}}statusfor, mod_rollcall, {{fullname}}{{/str}}">
+                        {{#options}}
+                        <option value="{{id}}"{{#selected}} selected{{/selected}}>{{{name}}}</option>
+                        {{/options}}
+                    </select>
+                </td>
+            </tr>
+            {{/rows}}
+        </tbody>
+    </table>
+
+    {{{pagingbar}}}
+
+    <div class="d-flex flex-wrap gap-2 align-items-center" data-region="bulk">
+        <label for="mod_rollcall-bulk-{{uniqid}}" class="mb-0">{{#str}}withselected, mod_rollcall{{/str}}</label>
+        <select id="mod_rollcall-bulk-{{uniqid}}" class="form-select w-auto" data-region="bulkstatus" autocomplete="off" disabled>
+            {{#bulkstatuses}}
+            <option value="{{id}}">{{{name}}}</option>
+            {{/bulkstatuses}}
+        </select>
+        <button type="button" class="btn btn-primary" data-action="bulkapply" disabled>{{#str}}apply, mod_rollcall{{/str}}</button>
+    </div>
+    {{/empty}}
+</div>
