@@ -124,6 +124,61 @@ final class lib_test extends \advanced_testcase {
     }
 
     /**
+     * Deleting a session or an activity removes its attendance.
+     */
+    public function test_deleting_session_and_instance_removes_attendance(): void {
+        global $DB;
+        $this->resetAfterTest();
+        set_config('coursebinenable', 0, 'tool_recyclebin');
+
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course();
+        $roll = $gen->create_module('rollcall', ['course' => $course->id]);
+        $user = $gen->create_and_enrol($course, 'student');
+        $statusid = (int)array_values(\mod_rollcall\local\status_manager::get_all((int)$roll->id))[0]->get('id');
+        $s1 = (int)\mod_rollcall\local\session_manager::create((int)$roll->id, 0, 'S1', 1000, 3600)->get('id');
+        $s2 = (int)\mod_rollcall\local\session_manager::create((int)$roll->id, 0, 'S2', 5000, 3600)->get('id');
+        foreach ([$s1, $s2] as $s) {
+            \mod_rollcall\local\attendance_manager::set($s, $statusid, [(int)$user->id]);
+        }
+
+        \mod_rollcall\local\session_manager::delete($s1);
+        $this->assertSame(0, $DB->count_records('rollcall_attendance', ['sessionid' => $s1]));
+        $this->assertSame(1, $DB->count_records('rollcall_attendance', ['sessionid' => $s2]));
+
+        (new \core_courseformat\local\cmactions($course))->delete($roll->cmid);
+        $this->assertSame(0, $DB->count_records('rollcall_attendance'));
+    }
+
+    /**
+     * The course reset can delete only the attendance, or the sessions together with it.
+     */
+    public function test_course_reset_attendance_options(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course();
+        $roll = $gen->create_module('rollcall', ['course' => $course->id]);
+        $user = $gen->create_and_enrol($course, 'student');
+        $statusid = (int)array_values(\mod_rollcall\local\status_manager::get_all((int)$roll->id))[0]->get('id');
+        $s = (int)\mod_rollcall\local\session_manager::create((int)$roll->id, 0, 'S', 1000, 3600)->get('id');
+        \mod_rollcall\local\attendance_manager::set($s, $statusid, [(int)$user->id]);
+
+        $status = rollcall_reset_userdata((object)['courseid' => $course->id, 'reset_rollcall_attendance' => 1]);
+        $this->assertSame(0, $DB->count_records('rollcall_attendance'));
+        $this->assertSame(1, $DB->count_records('rollcall_session', ['rollcallid' => $roll->id]));
+        $this->assertCount(1, $status);
+
+        \mod_rollcall\local\attendance_manager::set($s, $statusid, [(int)$user->id]);
+        rollcall_reset_userdata((object)['courseid' => $course->id, 'reset_rollcall_sessions' => 1]);
+        $this->assertSame(0, $DB->count_records('rollcall_attendance'));
+        $this->assertSame(0, $DB->count_records('rollcall_session', ['rollcallid' => $roll->id]));
+
+        $this->assertSame(1, rollcall_reset_course_form_defaults($course)['reset_rollcall_attendance']);
+    }
+
+    /**
      * Students do not see the activity; teachers do (core hides modules without mod/rollcall:view).
      */
     public function test_cm_hidden_for_students(): void {

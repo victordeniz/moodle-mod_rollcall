@@ -172,4 +172,24 @@ final class status_manager_test extends \advanced_testcase {
         $this->assertSame([], $this->names($second));
         $this->assertSame(0, (int)status_manager::create($second, 'Mine')->get('sortorder'));
     }
+
+    public function test_status_in_use_cannot_be_deleted(): void {
+        $this->resetAfterTest();
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course();
+        $roll = $gen->create_module('rollcall', ['course' => $course->id]);
+        $session = \mod_rollcall\local\session_manager::create((int)$roll->id, 0, 'S', 1000, 3600);
+        $user = $gen->create_and_enrol($course, 'student');
+        $statusid = (int)array_values(status_manager::get_all((int)$roll->id))[0]->get('id');
+
+        $this->assertFalse(status_manager::is_in_use($statusid));
+        \mod_rollcall\local\attendance_manager::set((int)$session->get('id'), $statusid, [(int)$user->id]);
+        $this->assertTrue(status_manager::is_in_use($statusid));
+        try {
+            status_manager::delete($statusid);
+            $this->fail('A status in use was deleted.');
+        } catch (\moodle_exception $e) {
+            $this->assertSame('statusinuse', $e->errorcode);
+        }
+    }
 }

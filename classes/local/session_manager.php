@@ -116,6 +116,7 @@ class session_manager {
     public static function delete(int $id, ?\context_module $context = null): void {
         $session = new session($id);
         $snapshot = clone $session;
+        attendance_manager::delete_for_session($id);
         $session->delete();
         // The persistent clears its id on delete, so the event gets the data from the snapshot.
         if ($context) {
@@ -137,6 +138,7 @@ class session_manager {
      */
     public static function delete_for_rollcall(int $rollcallid): void {
         global $DB;
+        attendance_manager::delete_for_rollcall($rollcallid);
         $DB->delete_records(session::TABLE, ['rollcallid' => $rollcallid]);
     }
 
@@ -147,6 +149,7 @@ class session_manager {
      */
     public static function delete_for_course(int $courseid): void {
         global $DB;
+        attendance_manager::delete_for_course($courseid);
         $DB->delete_records_select(
             session::TABLE,
             'rollcallid IN (SELECT id FROM {rollcall} WHERE course = :courseid)',

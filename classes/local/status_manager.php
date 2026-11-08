@@ -159,13 +159,12 @@ class status_manager {
     /**
      * Whether the status has been used to record attendance.
      *
-     * Nothing records attendance yet; the future sessions feature must answer here.
-     *
      * @param int $id
      * @return bool
      */
     public static function is_in_use(int $id): bool {
-        return false;
+        global $DB;
+        return $DB->record_exists('rollcall_attendance', ['statusid' => $id]);
     }
 
     /**
