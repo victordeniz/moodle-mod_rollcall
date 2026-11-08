@@ -16,6 +16,8 @@
 
 namespace mod_rollcall;
 
+use mod_rollcall\local\session_manager;
+
 /**
  * Tests for the take attendance capability.
  *
@@ -85,5 +87,113 @@ final class attendance_permissions_test extends \advanced_testcase {
             $this->assertTrue(has_capability('mod/rollcall:takeattendance', $context, $user));
         }
         $this->assertFalse(has_capability('mod/rollcall:takeattendance', $context, $this->student));
+    }
+
+    /**
+     * Sets the group mode of the roll and returns a fresh cm_info.
+     *
+     * @param int $mode
+     * @param int $groupingid
+     * @return \cm_info
+     */
+    private function cm(int $mode, int $groupingid = 0): \cm_info {
+        global $DB;
+        $DB->update_record('course_modules', (object)[
+            'id' => $this->roll->cmid,
+            'groupmode' => $mode,
+            'groupingid' => $groupingid,
+        ]);
+        rebuild_course_cache($this->course->id, true);
+        return get_fast_modinfo($this->course->id)->get_cm($this->roll->cmid);
+    }
+
+    /**
+     * Creates a session of a group.
+     *
+     * @param int $groupid
+     * @return \mod_rollcall\persistent\session
+     */
+    private function session(int $groupid): \mod_rollcall\persistent\session {
+        return session_manager::create((int)$this->roll->id, $groupid, 'S', time(), 3600);
+    }
+
+    /**
+     * Tests the rules of can_take.
+     */
+    public function test_can_take_rules(): void {
+        $this->resetAfterTest();
+        $this->build();
+        $s0 = $this->session(0);
+        $s1 = $this->session((int)$this->g1->id);
+        $s2 = $this->session((int)$this->g2->id);
+
+        $cm = $this->cm(NOGROUPS);
+        foreach ([$this->teacher, $this->editing, $this->manager] as $user) {
+            $this->assertTrue(session_manager::can_take($cm, $s0, $user->id));
+            $this->assertTrue(session_manager::can_take($cm, $s2, $user->id));
+        }
+        $this->assertFalse(session_manager::can_take($cm, $s0, $this->student->id));
+
+        foreach ([SEPARATEGROUPS, VISIBLEGROUPS] as $mode) {
+            $cm = $this->cm($mode);
+            $this->assertTrue(session_manager::can_take($cm, $s1, $this->teacher->id));
+            $this->assertFalse(session_manager::can_take($cm, $s2, $this->teacher->id));
+            $this->assertFalse(session_manager::can_take($cm, $s0, $this->teacher->id));
+            $this->assertFalse(session_manager::can_take($cm, $s1, $this->student->id));
+            $this->assertTrue(session_manager::can_take($cm, $s1, $this->editing->id));
+            foreach ([$s0, $s1, $s2] as $s) {
+                $this->assertTrue(session_manager::can_take($cm, $s, $this->manager->id));
+            }
+        }
+    }
+
+    /**
+     * Sessions of deleted groups can only be taken by users with access to all groups.
+     */
+    public function test_can_take_deleted_group(): void {
+        $this->resetAfterTest();
+        $this->build();
+        $s2 = $this->session((int)$this->g2->id);
+        groups_delete_group($this->g2->id);
+        foreach ([NOGROUPS, SEPARATEGROUPS] as $mode) {
+            $cm = $this->cm($mode);
+            $this->assertFalse(session_manager::can_take($cm, $s2, $this->teacher->id));
+            $this->assertTrue(session_manager::can_take($cm, $s2, $this->manager->id));
+        }
+    }
+
+    /**
+     * Managing sessions and taking attendance are independent capabilities.
+     */
+    public function test_capabilities_are_independent(): void {
+        $this->resetAfterTest();
+        $this->build();
+        $s1 = $this->session((int)$this->g1->id);
+        $cm = $this->cm(SEPARATEGROUPS);
+        $context = \context_module::instance($this->roll->cmid);
+        $roleid = $this->get_role_id('teacher');
+
+        assign_capability('mod/rollcall:managesessions', CAP_PROHIBIT, $roleid, $context->id, true);
+        $this->assertTrue(session_manager::can_take($cm, $s1, $this->teacher->id));
+        $this->assertFalse(session_manager::can_manage($cm, (int)$this->g1->id, $this->teacher->id));
+
+        assign_capability('mod/rollcall:managesessions', CAP_ALLOW, $roleid, $context->id, true);
+        assign_capability('mod/rollcall:takeattendance', CAP_PROHIBIT, $roleid, $context->id, true);
+        $this->assertFalse(session_manager::can_take($cm, $s1, $this->teacher->id));
+        $this->assertTrue(session_manager::can_manage($cm, (int)$this->g1->id, $this->teacher->id));
+    }
+
+    /**
+     * Tests the group used to query the roster.
+     */
+    public function test_roster_groupid(): void {
+        $this->resetAfterTest();
+        $this->build();
+        $cm = $this->cm(SEPARATEGROUPS);
+        $this->assertSame((int)$this->g1->id, session_manager::roster_groupid($cm, $this->session((int)$this->g1->id)));
+        $this->assertSame(0, session_manager::roster_groupid($cm, $this->session(0)));
+        $s2 = $this->session((int)$this->g2->id);
+        groups_delete_group($this->g2->id);
+        $this->assertSame(0, session_manager::roster_groupid($cm, $s2));
     }
 }

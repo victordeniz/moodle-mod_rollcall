@@ -180,15 +180,65 @@ class session_manager {
      * @return bool
      */
     public static function can_manage(\cm_info $cm, int $groupid, ?int $userid = null): bool {
-        global $DB, $USER;
-        $userid = $userid ?? (int)$USER->id;
+        global $USER;
+        return self::can_act($cm, $groupid, 'mod/rollcall:managesessions', $userid ?? (int)$USER->id);
+    }
+
+    /**
+     * Tells whether a user can take attendance of a session, with the same group rule as can_manage.
+     *
+     * @param \cm_info $cm
+     * @param session $session
+     * @param int|null $userid Defaults to the current user
+     * @return bool
+     */
+    public static function can_take(\cm_info $cm, session $session, ?int $userid = null): bool {
+        global $USER;
+        return self::can_act(
+            $cm,
+            (int)$session->get('groupid'),
+            'mod/rollcall:takeattendance',
+            $userid ?? (int)$USER->id
+        );
+    }
+
+    /**
+     * Returns the group used to query the roster of a session.
+     *
+     * It is the group of the session, or 0 if the session is for the whole activity or its group
+     * no longer exists in the course.
+     *
+     * @param \cm_info $cm
+     * @param session $session
+     * @return int
+     */
+    public static function roster_groupid(\cm_info $cm, session $session): int {
+        global $DB;
+        $groupid = (int)$session->get('groupid');
+        if ($groupid > 0 && $DB->record_exists('groups', ['id' => $groupid, 'courseid' => $cm->course])) {
+            return $groupid;
+        }
+        return 0;
+    }
+
+    /**
+     * Applies the group rule shared by managing sessions and taking attendance.
+     *
+     * @param \cm_info $cm
+     * @param int $groupid
+     * @param string $capability
+     * @param int $userid
+     * @return bool
+     */
+    private static function can_act(\cm_info $cm, int $groupid, string $capability, int $userid): bool {
+        global $DB;
         $context = $cm->context;
 
         if ($groupid < 0) {
             return false;
         }
 
-        if (!has_capability('mod/rollcall:managesessions', $context, $userid)) {
+        if (!has_capability($capability, $context, $userid)) {
             return false;
         }
         $accessall = has_capability('moodle/site:accessallgroups', $context, $userid);
