@@ -32,4 +32,11 @@ $functions = [
         'ajax' => true,
         'capabilities' => 'mod/rollcall:classify',
     ],
+    'mod_rollcall_set_attendance' => [
+        'classname' => \mod_rollcall\external\set_attendance::class,
+        'description' => 'Sets the attendance status of one or more students in a session.',
+        'type' => 'write',
+        'ajax' => true,
+        'capabilities' => 'mod/rollcall:takeattendance',
+    ],
 ];
