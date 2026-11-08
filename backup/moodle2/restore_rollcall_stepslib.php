@@ -33,11 +33,16 @@ class restore_rollcall_activity_structure_step extends restore_activity_structur
      * @return restore_path_element[]
      */
     protected function define_structure() {
-        return $this->prepare_activity_structure([
+        $paths = [
             new restore_path_element('rollcall', '/activity/rollcall'),
             new restore_path_element('rollcall_status', '/activity/rollcall/statuses/status'),
             new restore_path_element('rollcall_session', '/activity/rollcall/sessions/session'),
-        ]);
+        ];
+        if ($this->get_setting_value('userinfo')) {
+            $paths[] = new restore_path_element('rollcall_attendance',
+                '/activity/rollcall/sessions/session/attendances/attendance');
+        }
+        return $this->prepare_activity_structure($paths);
     }
 
     /**
@@ -73,8 +78,10 @@ class restore_rollcall_activity_structure_step extends restore_activity_structur
             $suffix++;
             $data->name = $base . ' (' . $suffix . ')';
         }
+        $oldid = $data->id;
         unset($data->id);
-        $DB->insert_record('rollcall_status', $data);
+        $newid = $DB->insert_record('rollcall_status', $data);
+        $this->set_mapping('rollcall_status', $oldid, $newid);
     }
 
     /**
@@ -95,6 +102,26 @@ class restore_rollcall_activity_structure_step extends restore_activity_structur
         unset($data->id);
         $newid = $DB->insert_record('rollcall_session', $data);
         $this->set_mapping('rollcall_session', $oldid, $newid);
+    }
+
+    /**
+     * Restores an attendance record, remapping session, status and user.
+     *
+     * The record is dropped when any of them was not restored.
+     *
+     * @param array $data
+     */
+    protected function process_rollcall_attendance($data) {
+        global $DB;
+        $data = (object)$data;
+        $data->sessionid = (int)$this->get_new_parentid('rollcall_session');
+        $data->statusid = (int)$this->get_mappingid('rollcall_status', $data->statusid);
+        $data->userid = (int)$this->get_mappingid('user', $data->userid);
+        if (!$data->sessionid || !$data->statusid || !$data->userid) {
+            return;
+        }
+        unset($data->id);
+        $DB->insert_record('rollcall_attendance', $data);
     }
 
     /**

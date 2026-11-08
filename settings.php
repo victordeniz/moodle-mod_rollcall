@@ -26,6 +26,7 @@ defined('MOODLE_INTERNAL') || die();
 
 /** @var admin_root $ADMIN */
 /** @var \core\plugininfo\mod $module */
+/** @var string $section */
 
 $folder = new admin_category('modrollcallfolder', new lang_string('pluginname', 'mod_rollcall'),
     $module->is_enabled() === false);
@@ -38,5 +39,16 @@ $ADMIN->add('modrollcallfolder', new admin_externalpage(
     $module->is_enabled() === false
 ));
 
-// The module has no settings of its own, only the catalogue page.
+// The settings page is added inside the module folder; the core must not add it a second time outside it.
+$settings = new admin_settingpage($section, get_string('settings'), 'moodle/site:config', $module->is_enabled() === false);
+if ($ADMIN->fulltree) {
+    $settings->add(new admin_setting_configtext(
+        'mod_rollcall/perpage',
+        new lang_string('perpage', 'mod_rollcall'),
+        new lang_string('perpage_desc', 'mod_rollcall'),
+        25,
+        '/^([1-9]\d?|[1-4]\d{2}|500)$/'
+    ));
+}
+$ADMIN->add('modrollcallfolder', $settings);
 $settings = null;

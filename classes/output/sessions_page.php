@@ -73,6 +73,9 @@ class sessions_page implements \renderable, \templatable {
                 'duration' => format_time((int)$session->get('duration')),
                 'group' => $groupname,
                 'highlight' => $id === $this->highlightid,
+                'takeurl' => session_manager::can_take($cm, $session) ? (new \moodle_url('/mod/rollcall/take.php', [
+                    'sessionid' => $id,
+                ]))->out(false) : null,
                 'editurl' => $canmanage ? (new \moodle_url('/mod/rollcall/editsession.php', [
                     'id' => $cm->id,
                     'sessionid' => $id,

@@ -20,7 +20,10 @@ use core_privacy\local\request\approved_contextlist;
 use core_privacy\local\request\approved_userlist;
 use core_privacy\local\request\userlist;
 use core_privacy\local\request\writer;
+use mod_rollcall\local\attendance_manager;
 use mod_rollcall\local\classification;
+use mod_rollcall\local\session_manager;
+use mod_rollcall\local\status_manager;
 use mod_rollcall\persistent\category;
 
 /**
@@ -79,6 +82,14 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         $tables = array_map(fn($item) => $item->get_name(), $collection->get_collection());
         $this->assertContains('rollcall_usercat', $tables);
         $this->assertContains('rollcall_category', $tables);
+        $this->assertContains('rollcall_attendance', $tables);
+        foreach ($collection->get_collection() as $item) {
+            if ($item->get_name() === 'rollcall_attendance') {
+                $fields = array_keys($item->get_privacy_fields());
+                sort($fields);
+                $this->assertSame(['sessionid', 'statusid', 'timecreated', 'timemodified', 'userid'], $fields);
+            }
+        }
     }
 
     public function test_get_contexts_for_userid(): void {
@@ -156,5 +167,68 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
 
         $this->assertFalse($DB->record_exists('rollcall_category', ['usermodified' => $admin->id]));
         $this->assertTrue($DB->record_exists('rollcall_category', ['id' => $this->erasmus->get('id')]));
+    }
+
+    public function test_attendance_privacy(): void {
+        global $DB;
+        $gen = $this->getDataGenerator();
+        $this->setAdminUser();
+        $rolls = [];
+        $contexts = [];
+        foreach (['One', 'Two'] as $name) {
+            $roll = $gen->create_module('rollcall', ['course' => $this->course->id]);
+            $session = session_manager::create((int)$roll->id, 0, "Session $name", 1700000000, 3600);
+            $status = array_values(status_manager::get_all((int)$roll->id))[0];
+            attendance_manager::set((int)$session->get('id'), (int)$status->get('id'), [(int)$this->s1->id]);
+            attendance_manager::set((int)$session->get('id'), (int)$status->get('id'), [(int)$this->s2->id]);
+            $rolls[$name] = $roll;
+            $contexts[$name] = \context_module::instance($roll->cmid);
+        }
+
+        // Contexts.
+        $ids = provider::get_contexts_for_userid($this->s1->id)->get_contextids();
+        $this->assertContains((int)$contexts['One']->id, array_map('intval', $ids));
+        $this->assertContains((int)$contexts['Two']->id, array_map('intval', $ids));
+
+        // Export.
+        $this->export_context_data_for_user($this->s1->id, $contexts['One'], 'mod_rollcall');
+        $data = writer::with_context($contexts['One'])->get_data([get_string('privacy:pathattendance', 'mod_rollcall')]);
+        $this->assertCount(1, $data->attendance);
+        $this->assertSame('Session One', $data->attendance[0]->session);
+        $this->assertNotEmpty($data->attendance[0]->sessiondate);
+        $this->assertNotEmpty($data->attendance[0]->status);
+        $this->assertNotEmpty($data->attendance[0]->timemodified);
+
+        // Users in context.
+        $userlist = new userlist($contexts['One'], 'mod_rollcall');
+        provider::get_users_in_context($userlist);
+        $this->assertEqualsCanonicalizing([$this->s1->id, $this->s2->id], $userlist->get_userids());
+
+        // Delete one user in one activity.
+        provider::delete_data_for_user(new approved_contextlist($this->s1, 'mod_rollcall', [$contexts['One']->id]));
+        $this->assertSame(1, $this->count_attendance($rolls['One']->id));
+        $this->assertSame(2, $this->count_attendance($rolls['Two']->id));
+
+        // Delete a user list.
+        provider::delete_data_for_users(new approved_userlist($contexts['Two'], 'mod_rollcall', [$this->s2->id]));
+        $this->assertSame(1, $this->count_attendance($rolls['Two']->id));
+
+        // Delete everything in one activity.
+        provider::delete_data_for_all_users_in_context($contexts['One']);
+        $this->assertSame(0, $this->count_attendance($rolls['One']->id));
+        $this->assertSame(1, $this->count_attendance($rolls['Two']->id));
+    }
+
+    /**
+     * Number of attendance rows of a roll.
+     *
+     * @param int $rollcallid
+     * @return int
+     */
+    private function count_attendance(int $rollcallid): int {
+        global $DB;
+        return $DB->count_records_sql("SELECT COUNT(a.id) FROM {rollcall_attendance} a
+                                         JOIN {rollcall_session} s ON s.id = a.sessionid
+                                        WHERE s.rollcallid = ?", [$rollcallid]);
     }
 }

@@ -79,6 +79,18 @@ $capabilities = [
         ],
     ],
 
+    // Take the attendance of the students in the sessions.
+    'mod/rollcall:takeattendance' => [
+        'riskbitmask' => RISK_PERSONAL,
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => [
+            'teacher' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+
     // Be listed as a student in the roll.
     'mod/rollcall:belisted' => [
         'captype' => 'read',

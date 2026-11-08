@@ -19,6 +19,7 @@ namespace mod_rollcall\backup;
 use backup;
 use backup_controller;
 use backup_setting;
+use mod_rollcall\local\attendance_manager;
 use mod_rollcall\local\classification;
 use mod_rollcall\local\session_manager;
 use mod_rollcall\local\status_manager;
@@ -263,5 +264,52 @@ final class backup_restore_test extends \advanced_testcase {
 
         $this->assertSame(['Whole' => [0, 1700000000, 3600], 'Grouped' => [(int)$group->id, 1700100000, 1800]],
             $this->sessions_by_name((int)$newcm->instance));
+    }
+
+    public function test_backup_restore_attendance_with_userinfo(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course();
+        $student = $gen->create_and_enrol($course, 'student');
+        $roll = $gen->create_module('rollcall', ['course' => $course->id]);
+        $session = session_manager::create((int)$roll->id, 0, 'Whole', 1700000000, 3600);
+        $statuses = array_values(status_manager::get_all((int)$roll->id));
+        attendance_manager::set((int)$session->get('id'), (int)$statuses[1]->get('id'), [(int)$student->id]);
+
+        $newcourseid = $this->duplicate_with_userdata($course);
+
+        $restored = $DB->get_record('rollcall', ['course' => $newcourseid], '*', MUST_EXIST);
+        $newsession = $DB->get_record('rollcall_session', ['rollcallid' => $restored->id], '*', MUST_EXIST);
+        $rows = $DB->get_records('rollcall_attendance', ['sessionid' => $newsession->id]);
+        $this->assertCount(1, $rows);
+        $row = reset($rows);
+        $this->assertEquals($student->id, $row->userid);
+        $newstatus = $DB->get_record('rollcall_status', ['id' => $row->statusid], '*', MUST_EXIST);
+        $this->assertEquals($restored->id, $newstatus->rollcallid);
+        $this->assertSame($statuses[1]->get('name'), $newstatus->name);
+        // The original is untouched.
+        $this->assertSame(1, attendance_manager::count_for_session((int)$session->get('id')));
+    }
+
+    public function test_backup_without_userinfo_has_no_attendance(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course();
+        $student = $gen->create_and_enrol($course, 'student');
+        $roll = $gen->create_module('rollcall', ['course' => $course->id]);
+        $session = session_manager::create((int)$roll->id, 0, 'Whole', 1700000000, 3600);
+        $statuses = array_values(status_manager::get_all((int)$roll->id));
+        attendance_manager::set((int)$session->get('id'), (int)$statuses[0]->get('id'), [(int)$student->id]);
+
+        $newcm = (new \core_courseformat\local\cmactions($course))->duplicate((int)$roll->cmid);
+
+        $this->assertSame(['Whole' => [0, 1700000000, 3600]], $this->sessions_by_name((int)$newcm->instance));
+        $this->assertCount(3, status_manager::get_all((int)$newcm->instance));
+        $newsession = $DB->get_record('rollcall_session', ['rollcallid' => $newcm->instance], '*', MUST_EXIST);
+        $this->assertSame(0, attendance_manager::count_for_session((int)$newsession->id));
     }
 }

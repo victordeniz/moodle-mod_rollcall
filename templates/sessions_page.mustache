@@ -22,7 +22,7 @@
     Context variables required for this template:
     * addurl - URL to create a session, null if the user cannot
     * hasrows - whether there are sessions
-    * rows - list of {name, date, duration, group, highlight, editurl, deleteurl}
+    * rows - list of {name, date, duration, group, highlight, takeurl, editurl, deleteurl}
 
     Example context (json):
     {
@@ -30,9 +30,9 @@
         "hasrows": true,
         "rows": [
             {"name": "Session 06/11/26", "date": "6 November 2026, 10:00", "duration": "1 hour", "group": "G1",
-             "highlight": true, "editurl": "#", "deleteurl": "#"},
+             "highlight": true, "takeurl": "#", "editurl": "#", "deleteurl": "#"},
             {"name": "Lab", "date": "5 November 2026, 09:00", "duration": "1 hour 30 mins", "group": "Whole activity",
-             "highlight": false, "editurl": null, "deleteurl": null}
+             "highlight": false, "takeurl": null, "editurl": null, "deleteurl": null}
         ]
     }
 }}
@@ -51,7 +51,7 @@
         <tbody>
             {{#rows}}
             <tr{{#highlight}} class="table-warning"{{/highlight}}>
-                <td>{{{name}}}</td>
+                <td>{{#takeurl}}<a href="{{takeurl}}">{{/takeurl}}{{{name}}}{{#takeurl}}</a>{{/takeurl}}</td>
                 <td>{{date}}</td>
                 <td>{{duration}}</td>
                 <td>{{{group}}}</td>
