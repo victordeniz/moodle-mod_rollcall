@@ -92,6 +92,17 @@ $capabilities = [
     ],
 
     // Be listed as a student in the roll.
+    'mod/rollcall:viewreport' => [
+        'riskbitmask' => RISK_PERSONAL,
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => [
+            'teacher' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+
     'mod/rollcall:belisted' => [
         'captype' => 'read',
         'contextlevel' => CONTEXT_MODULE,
