@@ -130,7 +130,7 @@ final class backup_restore_test extends \advanced_testcase {
         $course = $gen->create_course();
         $roll = $gen->create_module('rollcall', ['course' => $course->id]);
         $all = array_values(status_manager::get_all((int)$roll->id));
-        status_manager::update((int)$all[0]->get('id'), 'Excused');
+        status_manager::update((int)$all[0]->get('id'), 'Excused', 0);
         status_manager::set_visible((int)$all[1]->get('id'), false);
         status_manager::move((int)$all[2]->get('id'), -1);
 
@@ -169,7 +169,7 @@ final class backup_restore_test extends \advanced_testcase {
         $course = $gen->create_course();
         $roll = $gen->create_module('rollcall', ['course' => $course->id]);
         $first = array_values(status_manager::get_all((int)$roll->id))[0];
-        status_manager::update((int)$first->get('id'), 'Excused');
+        status_manager::update((int)$first->get('id'), 'Excused', 0);
 
         $newcm = (new \core_courseformat\local\cmactions($course))->duplicate((int)$roll->cmid);
 

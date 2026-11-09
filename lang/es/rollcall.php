@@ -148,5 +148,6 @@ $string['studentsclassified'] = 'Alumnos clasificados';
 $string['takeattendance'] = 'Pasar lista';
 $string['usernotlisted'] = 'El usuario no es un alumno de esta lista.';
 $string['visible'] = 'Visible';
+$string['weightrange'] = 'Introduce un número entero entre 0 y 100.';
 $string['wholeactivity'] = 'Toda la actividad';
 $string['withselected'] = 'Con los alumnos seleccionados:';

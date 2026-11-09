@@ -90,5 +90,24 @@ function xmldb_rollcall_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2026110800, 'rollcall');
     }
 
+    if ($oldversion < 2026110900) {
+        // Weight of the attendance statuses.
+        $table = new xmldb_table('rollcall_status');
+        $field = new xmldb_field('weight', XMLDB_TYPE_INTEGER, '3', null, XMLDB_NOTNULL, null, '0', 'visible');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        // The default statuses of existing activities get their default weight; the others stay at 0.
+        $rolls = $DB->get_recordset('rollcall', null, '', 'id, course');
+        foreach ($rolls as $roll) {
+            \mod_rollcall\local\status_manager::apply_default_weights(
+                (int)$roll->id,
+                \mod_rollcall\local\status_manager::lang_for_course((int)$roll->course)
+            );
+        }
+        $rolls->close();
+        upgrade_mod_savepoint(true, 2026110900, 'rollcall');
+    }
+
     return true;
 }

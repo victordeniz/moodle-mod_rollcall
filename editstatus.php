@@ -54,9 +54,9 @@ if ($form->is_cancelled()) {
 } else if ($data = $form->get_data()) {
     if ($data->statusid) {
         status_manager::get_for_rollcall((int)$data->statusid, (int)$cm->instance);
-        status_manager::update((int)$data->statusid, $data->name, $context);
+        status_manager::update((int)$data->statusid, $data->name, 0, $context);
     } else {
-        status_manager::create((int)$cm->instance, $data->name, $context);
+        status_manager::create((int)$cm->instance, $data->name, 0, $context);
     }
     redirect($returnurl, get_string('changessaved'), null, \core\output\notification::NOTIFY_SUCCESS);
 }

@@ -148,5 +148,6 @@ $string['studentsclassified'] = 'Students classified';
 $string['takeattendance'] = 'Take attendance';
 $string['usernotlisted'] = 'The user is not a student listed in this roll.';
 $string['visible'] = 'Visible';
+$string['weightrange'] = 'Enter a whole number between 0 and 100.';
 $string['wholeactivity'] = 'Whole activity';
 $string['withselected'] = 'With selected students:';
