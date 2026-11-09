@@ -44,7 +44,8 @@ $PAGE->navbar->add($title);
 $form = new \mod_rollcall\form\status_form($PAGE->url, ['rollcallid' => (int)$cm->instance]);
 if ($statusid) {
     $status = status_manager::get_for_rollcall($statusid, (int)$cm->instance);
-    $form->set_data(['id' => $cm->id, 'statusid' => $statusid, 'name' => $status->get('name')]);
+    $form->set_data(['id' => $cm->id, 'statusid' => $statusid, 'name' => $status->get('name'),
+        'weight' => (int)$status->get('weight')]);
 } else {
     $form->set_data(['id' => $cm->id]);
 }
@@ -54,9 +55,9 @@ if ($form->is_cancelled()) {
 } else if ($data = $form->get_data()) {
     if ($data->statusid) {
         status_manager::get_for_rollcall((int)$data->statusid, (int)$cm->instance);
-        status_manager::update((int)$data->statusid, $data->name, 0, $context);
+        status_manager::update((int)$data->statusid, $data->name, (int)$data->weight, $context);
     } else {
-        status_manager::create((int)$cm->instance, $data->name, 0, $context);
+        status_manager::create((int)$cm->instance, $data->name, (int)$data->weight, $context);
     }
     redirect($returnurl, get_string('changessaved'), null, \core\output\notification::NOTIFY_SUCCESS);
 }
