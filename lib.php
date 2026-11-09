@@ -162,9 +162,10 @@ function rollcall_reset_userdata($data) {
 }
 
 /**
- * Adds the students and statuses pages to the activity navigation.
+ * Adds the students, statuses and report pages to the activity navigation.
  *
- * The students page is shown to users who can view the roll, the statuses page only to those who can manage them.
+ * The students page is shown to users who can view the roll, the statuses page only to those who can manage them
+ * and the report only to those who can view it.
  *
  * @param settings_navigation $settingsnav
  * @param navigation_node $rollcallnode
@@ -192,6 +193,15 @@ function rollcall_extend_settings_navigation(settings_navigation $settingsnav, n
             navigation_node::TYPE_SETTING,
             null,
             'mod_rollcall_statuses'
+        );
+    }
+    if (has_capability('mod/rollcall:viewreport', $context)) {
+        $rollcallnode->add(
+            get_string('report', 'mod_rollcall'),
+            new moodle_url('/mod/rollcall/report.php', ['id' => $PAGE->cm->id]),
+            navigation_node::TYPE_SETTING,
+            null,
+            'mod_rollcall_report'
         );
     }
 }

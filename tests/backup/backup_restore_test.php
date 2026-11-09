@@ -41,9 +41,11 @@ final class backup_restore_test extends \advanced_testcase {
      *
      * @param \stdClass $course
      * @param array $restoresettings Restore plan setting values by name, applied before the precheck
+     * @param callable|null $beforerestore Called with the backup id between the backup and the restore
      * @return int The new course id
      */
-    private function duplicate_with_userdata(\stdClass $course, array $restoresettings = []): int {
+    private function duplicate_with_userdata(\stdClass $course, array $restoresettings = [],
+            ?callable $beforerestore = null): int {
         global $CFG, $USER;
         require_once($CFG->dirroot . '/backup/util/includes/backup_includes.php');
         require_once($CFG->dirroot . '/backup/util/includes/restore_includes.php');
@@ -56,6 +58,9 @@ final class backup_restore_test extends \advanced_testcase {
         $backupid = $bc->get_backupid();
         $bc->execute_plan();
         $bc->destroy();
+        if ($beforerestore) {
+            $beforerestore($backupid);
+        }
 
         $newcourseid = restore_dbops::create_new_course($course->fullname, $course->shortname . '_copy', $course->category);
         $rc = new restore_controller($backupid, $newcourseid, backup::INTERACTIVE_NO, backup::MODE_GENERAL, $USER->id,
@@ -130,7 +135,7 @@ final class backup_restore_test extends \advanced_testcase {
         $course = $gen->create_course();
         $roll = $gen->create_module('rollcall', ['course' => $course->id]);
         $all = array_values(status_manager::get_all((int)$roll->id));
-        status_manager::update((int)$all[0]->get('id'), 'Excused');
+        status_manager::update((int)$all[0]->get('id'), 'Excused', 0);
         status_manager::set_visible((int)$all[1]->get('id'), false);
         status_manager::move((int)$all[2]->get('id'), -1);
 
@@ -145,6 +150,76 @@ final class backup_restore_test extends \advanced_testcase {
             array_keys(status_manager::get_all((int)$roll->id)),
             array_keys(status_manager::get_all((int)$restored->id))
         ));
+    }
+
+    public function test_backup_restore_keeps_weights(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course();
+        $roll = $gen->create_module('rollcall', ['course' => $course->id]);
+        $default = array_values(status_manager::get_all((int)$roll->id))[0];
+        status_manager::update((int)$default->get('id'), $default->get('name'), 20);
+        status_manager::create((int)$roll->id, 'Custom', 70);
+
+        $newcourseid = $this->duplicate_with_userdata($course);
+
+        $restored = $DB->get_record('rollcall', ['course' => $newcourseid], '*', MUST_EXIST);
+        $this->assertSame([20, 50, 0, 70], $this->weights((int)$restored->id));
+    }
+
+    public function test_restore_old_backup_without_weight(): void {
+        global $CFG, $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course(['lang' => 'en']);
+        $roll = $gen->create_module('rollcall', ['course' => $course->id]);
+        status_manager::create((int)$roll->id, 'Custom', 70);
+
+        // Backups made before statuses had a weight have no weight element.
+        $newcourseid = $this->duplicate_with_userdata($course, [], function(string $backupid) use ($CFG): void {
+            $files = glob($CFG->tempdir . '/backup/' . $backupid . '/activities/rollcall_*/rollcall.xml');
+            $this->assertCount(1, $files);
+            $xml = file_get_contents($files[0]);
+            $this->assertStringContainsString('<weight>', $xml);
+            file_put_contents($files[0], preg_replace('~<weight>[^<]*</weight>~', '', $xml));
+        });
+
+        $restored = $DB->get_record('rollcall', ['course' => $newcourseid], '*', MUST_EXIST);
+        $this->assertSame([100, 50, 0, 0], $this->weights((int)$restored->id));
+    }
+
+    public function test_restore_clamps_weight_out_of_range(): void {
+        global $CFG, $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course(['lang' => 'en']);
+        $roll = $gen->create_module('rollcall', ['course' => $course->id]);
+        status_manager::create((int)$roll->id, 'Custom', 70);
+
+        // A hand-edited backup must not produce weights outside 0-100.
+        $newcourseid = $this->duplicate_with_userdata($course, [], function(string $backupid) use ($CFG): void {
+            $files = glob($CFG->tempdir . '/backup/' . $backupid . '/activities/rollcall_*/rollcall.xml');
+            $xml = file_get_contents($files[0]);
+            $xml = str_replace('<weight>70</weight>', '<weight>150</weight>', $xml);
+            file_put_contents($files[0], str_replace('<weight>0</weight>', '<weight>-5</weight>', $xml));
+        });
+
+        $restored = $DB->get_record('rollcall', ['course' => $newcourseid], '*', MUST_EXIST);
+        $this->assertSame([100, 50, 0, 100], $this->weights((int)$restored->id));
+    }
+
+    /**
+     * Returns the weights of a roll's statuses in display order.
+     *
+     * @param int $rollcallid
+     * @return int[]
+     */
+    private function weights(int $rollcallid): array {
+        return array_values(array_map(fn(status $s) => (int)$s->get('weight'), status_manager::get_all($rollcallid)));
     }
 
     public function test_restore_of_activity_without_statuses_stays_empty(): void {
@@ -169,7 +244,7 @@ final class backup_restore_test extends \advanced_testcase {
         $course = $gen->create_course();
         $roll = $gen->create_module('rollcall', ['course' => $course->id]);
         $first = array_values(status_manager::get_all((int)$roll->id))[0];
-        status_manager::update((int)$first->get('id'), 'Excused');
+        status_manager::update((int)$first->get('id'), 'Excused', 0);
 
         $newcm = (new \core_courseformat\local\cmactions($course))->duplicate((int)$roll->cmid);
 

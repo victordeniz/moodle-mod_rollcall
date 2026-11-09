@@ -50,7 +50,24 @@ class status extends \core\persistent {
                 'type' => PARAM_BOOL,
                 'default' => true,
             ],
+            'weight' => [
+                'type' => PARAM_INT,
+                'default' => 0,
+            ],
         ];
+    }
+
+    /**
+     * Validates the weight: a whole number from 0 to 100.
+     *
+     * @param int $value
+     * @return true|lang_string
+     */
+    protected function validate_weight($value) {
+        if ($value < 0 || $value > 100) {
+            return new lang_string('weightrange', 'mod_rollcall');
+        }
+        return true;
     }
 
     /**

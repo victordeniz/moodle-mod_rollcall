@@ -33,6 +33,9 @@ use mod_rollcall\persistent\status;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class status_manager {
+    /** Weights of the default statuses, in the order of {@see default_names()}. */
+    public const DEFAULT_WEIGHTS = [100, 50, 0];
+
     /**
      * Returns all the statuses of a roll, in display order.
      *
@@ -74,10 +77,11 @@ class status_manager {
      *
      * @param int $rollcallid
      * @param string $name
+     * @param int $weight Value of a session with this status, 0 to 100
      * @param \context_module|null $context
      * @return status
      */
-    public static function create(int $rollcallid, string $name, ?\context_module $context = null): status {
+    public static function create(int $rollcallid, string $name, int $weight, ?\context_module $context = null): status {
         global $DB;
 
         $max = $DB->get_field_sql(
@@ -89,6 +93,7 @@ class status_manager {
             'name' => trim($name),
             'sortorder' => $max === null ? 0 : (int)$max + 1,
             'visible' => 1,
+            'weight' => $weight,
         ]);
         $status->create();
         self::trigger(status_created::class, $status, $context);
@@ -96,16 +101,18 @@ class status_manager {
     }
 
     /**
-     * Renames a status.
+     * Renames a status and changes its weight.
      *
      * @param int $id
      * @param string $name
+     * @param int $weight Value of a session with this status, 0 to 100
      * @param \context_module|null $context
      * @return status
      */
-    public static function update(int $id, string $name, ?\context_module $context = null): status {
+    public static function update(int $id, string $name, int $weight, ?\context_module $context = null): status {
         $status = new status($id);
         $status->set('name', trim($name));
+        $status->set('weight', $weight);
         $status->update();
         self::trigger(status_updated::class, $status, $context);
         return $status;
@@ -243,14 +250,51 @@ class status_manager {
             self::get_all($rollcallid)
         );
         $created = 0;
-        foreach (self::default_names($lang) as $name) {
+        foreach (self::default_names($lang) as $index => $name) {
             if (in_array(\core_text::strtolower(trim($name)), $existing, true)) {
                 continue;
             }
-            self::create($rollcallid, $name, $context);
+            self::create($rollcallid, $name, self::DEFAULT_WEIGHTS[$index], $context);
             $created++;
         }
         return $created;
+    }
+
+    /**
+     * Returns the weight of the default status with this name, or 0 if it is not a default one.
+     *
+     * Names are compared ignoring case and surrounding spaces.
+     *
+     * @param string $name
+     * @param string $lang Language of the default names
+     * @return int
+     */
+    public static function default_weight(string $name, string $lang): int {
+        $normalised = \core_text::strtolower(trim($name));
+        foreach (self::default_names($lang) as $index => $default) {
+            if (\core_text::strtolower(trim($default)) === $normalised) {
+                return self::DEFAULT_WEIGHTS[$index];
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Gives the default weight to the statuses of a roll named like a default status, without events.
+     *
+     * The other statuses are not changed.
+     *
+     * @param int $rollcallid
+     * @param string $lang Language of the default names
+     */
+    public static function apply_default_weights(int $rollcallid, string $lang): void {
+        global $DB;
+        foreach ($DB->get_records(status::TABLE, ['rollcallid' => $rollcallid], '', 'id, name') as $record) {
+            $weight = self::default_weight($record->name, $lang);
+            if ($weight > 0) {
+                $DB->set_field(status::TABLE, 'weight', $weight, ['id' => $record->id]);
+            }
+        }
     }
 
     /**

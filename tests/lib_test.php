@@ -194,6 +194,22 @@ final class lib_test extends \advanced_testcase {
     }
 
     /**
+     * Teachers, with and without editing rights, can view the attendance report; students cannot.
+     */
+    public function test_report_capability(): void {
+        $this->resetAfterTest();
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course();
+        $roll = $gen->create_module('rollcall', ['course' => $course->id]);
+        $context = \context_module::instance($roll->cmid);
+
+        foreach (['teacher' => true, 'editingteacher' => true, 'student' => false] as $role => $expected) {
+            $user = $gen->create_and_enrol($course, $role);
+            $this->assertSame($expected, has_capability('mod/rollcall:viewreport', $context, $user), $role);
+        }
+    }
+
+    /**
      * The module declares the expected features.
      */
     public function test_supports(): void {

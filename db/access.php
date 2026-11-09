@@ -91,6 +91,18 @@ $capabilities = [
         ],
     ],
 
+    // View the attendance report.
+    'mod/rollcall:viewreport' => [
+        'riskbitmask' => RISK_PERSONAL,
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => [
+            'teacher' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+
     // Be listed as a student in the roll.
     'mod/rollcall:belisted' => [
         'captype' => 'read',

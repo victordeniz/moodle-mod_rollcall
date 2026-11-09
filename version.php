@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_rollcall';
-$plugin->version   = 2026110803;
+$plugin->version   = 2026110901;
 $plugin->requires  = 2026042000; // Moodle 5.2.
 $plugin->supported = [502, 502];
 $plugin->maturity  = MATURITY_ALPHA;

@@ -109,6 +109,7 @@ foreach ($statuses as $index => $status) {
     $rows[] = [
         'name' => format_string($status->get('name'), true, ['context' => $context]),
         'visible' => $visible,
+        'weight' => (int)$status->get('weight'),
         'upurl' => $index > 0 ? $actionurl('up') : null,
         'downurl' => $index < count($statuses) - 1 ? $actionurl('down') : null,
         'editurl' => (new moodle_url('/mod/rollcall/editstatus.php', ['id' => $cm->id, 'statusid' => $rowid]))->out(false),

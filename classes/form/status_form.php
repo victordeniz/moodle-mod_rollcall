@@ -48,11 +48,18 @@ class status_form extends \moodleform {
         $mform->addRule('name', null, 'required', null, 'client');
         $mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');
 
+        // Empty by default: the teacher chooses the weight of every new status.
+        $mform->addElement('text', 'weight', get_string('weight', 'mod_rollcall'), ['size' => 3]);
+        $mform->setType('weight', PARAM_RAW_TRIMMED);
+        $mform->addRule('weight', null, 'required', null, 'client');
+        $mform->addHelpButton('weight', 'weight', 'mod_rollcall');
+
         $this->add_action_buttons();
     }
 
     /**
-     * Validates the name with the rules of the persistent (not blank, unique in the roll).
+     * Validates the weight (a whole number from 0 to 100) and the name with the rules of the persistent
+     * (not blank, unique in the roll).
      *
      * @param array $data
      * @param array $files
@@ -60,6 +67,10 @@ class status_form extends \moodleform {
      */
     public function validation($data, $files) {
         $errors = parent::validation($data, $files);
+        $weight = trim((string)($data['weight'] ?? ''));
+        if (!preg_match('/^\d{1,3}$/', $weight) || (int)$weight > 100) {
+            $errors['weight'] = get_string('weightrange', 'mod_rollcall');
+        }
         $rollcallid = (int)$this->_customdata['rollcallid'];
         $statusid = (int)$data['statusid'];
         if ($statusid) {

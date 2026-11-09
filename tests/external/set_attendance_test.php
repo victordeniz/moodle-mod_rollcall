@@ -68,7 +68,7 @@ final class set_attendance_test extends \core_external\tests\externallib_testcas
         $gen->create_group_member(['groupid' => $this->g1->id, 'userid' => $this->u1->id]);
         $gen->create_group_member(['groupid' => $this->g1->id, 'userid' => $this->u2->id]);
         $gen->create_group_member(['groupid' => $this->g2->id, 'userid' => $this->other->id]);
-        $this->status = status_manager::create((int)$this->roll->id, 'Custom');
+        $this->status = status_manager::create((int)$this->roll->id, 'Custom', 0);
     }
 
     /**
@@ -156,7 +156,7 @@ final class set_attendance_test extends \core_external\tests\externallib_testcas
                 break;
             case 'otherrollstatus':
                 $roll2 = $gen->create_module('rollcall', ['course' => $this->course->id]);
-                $stid = (int)status_manager::create((int)$roll2->id, 'Foreign')->get('id');
+                $stid = (int)status_manager::create((int)$roll2->id, 'Foreign', 0)->get('id');
                 break;
             case 'otherrollsession':
                 $roll2 = $gen->create_module('rollcall', ['course' => $this->course->id]);

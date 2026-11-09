@@ -113,9 +113,9 @@ final class status_manager_test extends \advanced_testcase {
         [$id, $context] = $this->create_empty_roll();
 
         $sink = $this->redirectEvents();
-        $a = status_manager::create($id, 'A', $context);
-        $b = status_manager::create($id, 'B', $context);
-        $c = status_manager::create($id, 'C');
+        $a = status_manager::create($id, 'A', 0, $context);
+        $b = status_manager::create($id, 'B', 0, $context);
+        $c = status_manager::create($id, 'C', 0);
         $events = $sink->get_events();
         $this->assertCount(2, $events, 'Creating without a context triggers no event.');
         $this->assertInstanceOf(status_created::class, $events[0]);
@@ -123,7 +123,7 @@ final class status_manager_test extends \advanced_testcase {
         $this->assertSame([0, 1, 2], array_values(array_map(fn(status $s) => (int)$s->get('sortorder'),
             status_manager::get_all($id))));
 
-        status_manager::update((int)$a->get('id'), 'A2', $context);
+        status_manager::update((int)$a->get('id'), 'A2', 0, $context);
         $this->assertInstanceOf(status_updated::class, $sink->get_events()[2]);
         $this->assertSame(['A2', 'B', 'C'], $this->names($id));
 
@@ -153,7 +153,7 @@ final class status_manager_test extends \advanced_testcase {
         $this->assertSame(status_manager::default_names('en'), $this->names($id));
 
         $first = array_values(status_manager::get_all($id))[0];
-        status_manager::update((int)$first->get('id'), 'Tarde');
+        status_manager::update((int)$first->get('id'), 'Tarde', 0);
         $this->assertSame(1, status_manager::add_missing_defaults($id, 'en'));
         $this->assertSame(0, status_manager::add_missing_defaults($id, 'en'));
         $names = $this->names($id);
@@ -167,10 +167,10 @@ final class status_manager_test extends \advanced_testcase {
         [$first] = $this->create_empty_roll();
         [$second] = $this->create_empty_roll();
 
-        status_manager::create($first, 'Only here');
+        status_manager::create($first, 'Only here', 0);
         $this->assertSame(['Only here'], $this->names($first));
         $this->assertSame([], $this->names($second));
-        $this->assertSame(0, (int)status_manager::create($second, 'Mine')->get('sortorder'));
+        $this->assertSame(0, (int)status_manager::create($second, 'Mine', 0)->get('sortorder'));
     }
 
     public function test_status_in_use_cannot_be_deleted(): void {
@@ -191,5 +191,72 @@ final class status_manager_test extends \advanced_testcase {
         } catch (\moodle_exception $e) {
             $this->assertSame('statusinuse', $e->errorcode);
         }
+    }
+
+    public function test_default_weights(): void {
+        $this->resetAfterTest();
+        [$id] = $this->create_empty_roll();
+
+        status_manager::add_missing_defaults($id, 'en');
+
+        $this->assertSame([100, 50, 0], $this->weights($id));
+    }
+
+    public function test_create_and_update_weight(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        [$id, $context] = $this->create_empty_roll();
+
+        $status = status_manager::create($id, 'X', 70);
+        $this->assertSame(70, (int)$status->get('weight'));
+
+        $sink = $this->redirectEvents();
+        status_manager::update((int)$status->get('id'), 'X', 30, $context);
+        $events = $sink->get_events();
+        $sink->close();
+        $this->assertSame([30], $this->weights($id));
+        $this->assertCount(1, $events);
+        $this->assertInstanceOf(status_updated::class, $events[0]);
+    }
+
+    public function test_weight_out_of_range_is_rejected(): void {
+        $this->resetAfterTest();
+        [$id] = $this->create_empty_roll();
+
+        foreach (['Y' => 101, 'Z' => -1] as $name => $weight) {
+            try {
+                status_manager::create($id, $name, $weight);
+                $this->fail("Weight $weight must be rejected.");
+            } catch (\core\invalid_persistent_exception $e) {
+                $this->assertStringContainsString(get_string('weightrange', 'mod_rollcall'), $e->getMessage());
+            }
+        }
+        $this->assertSame([], $this->weights($id));
+    }
+
+    public function test_default_weight_and_apply(): void {
+        $this->resetAfterTest();
+        [$id] = $this->create_empty_roll();
+
+        $this->assertSame(50, status_manager::default_weight('  late ', 'en'));
+        $this->assertSame(100, status_manager::default_weight('Present', 'en'));
+        $this->assertSame(0, status_manager::default_weight('Other', 'en'));
+
+        status_manager::create($id, 'Present', 0);
+        status_manager::create($id, 'LATE', 0);
+        status_manager::create($id, 'Custom', 40);
+        status_manager::apply_default_weights($id, 'en');
+
+        $this->assertSame([100, 50, 40], $this->weights($id));
+    }
+
+    /**
+     * Returns the weights of a roll's statuses in display order.
+     *
+     * @param int $rollcallid
+     * @return int[]
+     */
+    private function weights(int $rollcallid): array {
+        return array_values(array_map(fn(status $s) => (int)$s->get('weight'), status_manager::get_all($rollcallid)));
     }
 }

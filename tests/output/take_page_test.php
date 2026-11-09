@@ -59,8 +59,8 @@ final class take_page_test extends \advanced_testcase {
         $this->cm = get_fast_modinfo($this->course)->get_cm($roll->cmid);
         // Drop the default statuses so the fixture controls them.
         $DB->delete_records('rollcall_status', ['rollcallid' => $roll->id]);
-        $this->statusa = status_manager::create((int)$roll->id, 'A');
-        $this->statush = status_manager::create((int)$roll->id, 'H');
+        $this->statusa = status_manager::create((int)$roll->id, 'A', 0);
+        $this->statush = status_manager::create((int)$roll->id, 'H', 0);
         $this->categoryc = $gen->get_plugin_generator('mod_rollcall')->create_category(['name' => 'C', 'color' => 'amber']);
 
         // Sorted by last name: Eve Alpha, Dan Beta, Bob Delta, Cid Gamma, Ann Zeta.

@@ -23,7 +23,7 @@
     * addurl - URL to create a status
     * restoreurl - URL to restore the default statuses
     * hasrows - whether there are statuses
-    * rows - list of {name, visible, upurl, downurl, editurl, toggleurl, deleteurl}
+    * rows - list of {name, weight, visible, upurl, downurl, editurl, toggleurl, deleteurl}
 
     Example context (json):
     {
@@ -31,9 +31,9 @@
         "restoreurl": "#",
         "hasrows": true,
         "rows": [
-            {"name": "Present", "visible": true, "upurl": null, "downurl": "#", "editurl": "#",
+            {"name": "Present", "weight": 100, "visible": true, "upurl": null, "downurl": "#", "editurl": "#",
              "toggleurl": "#", "deleteurl": "#"},
-            {"name": "Late", "visible": false, "upurl": "#", "downurl": null, "editurl": "#",
+            {"name": "Late", "weight": 50, "visible": false, "upurl": "#", "downurl": null, "editurl": "#",
              "toggleurl": "#", "deleteurl": "#"}
         ]
     }
@@ -45,6 +45,7 @@
             <tr>
                 <th scope="col">{{#str}}order, mod_rollcall{{/str}}</th>
                 <th scope="col">{{#str}}name{{/str}}</th>
+                <th scope="col">{{#str}}weight, mod_rollcall{{/str}}</th>
                 <th scope="col">{{#str}}visible, mod_rollcall{{/str}}</th>
                 <th scope="col">{{#str}}actions{{/str}}</th>
             </tr>
@@ -57,6 +58,7 @@
                     {{#downurl}}<a href="{{downurl}}">{{#pix}}t/down, core, {{#str}}movedown{{/str}}{{/pix}}</a>{{/downurl}}
                 </td>
                 <td>{{{name}}}</td>
+                <td>{{weight}}</td>
                 <td>{{#visible}}{{#str}}yes{{/str}}{{/visible}}{{^visible}}{{#str}}no{{/str}}{{/visible}}</td>
                 <td class="text-nowrap">
                     <a href="{{editurl}}" class="me-2">{{#pix}}t/edit, core, {{#str}}edit{{/str}}{{/pix}}</a>
