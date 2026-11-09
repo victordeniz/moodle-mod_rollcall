@@ -36,7 +36,7 @@ class backup_rollcall_activity_structure_step extends backup_activity_structure_
         $roll = new backup_nested_element('rollcall', ['id'], ['name', 'intro', 'introformat', 'timecreated', 'timemodified']);
         // The statuses wrapper is always written, so an activity without statuses restores without statuses.
         $statuses = new backup_nested_element('statuses');
-        $status = new backup_nested_element('status', ['id'], ['name', 'sortorder', 'visible', 'timecreated', 'timemodified']);
+        $status = new backup_nested_element('status', ['id'], ['name', 'sortorder', 'visible', 'weight', 'timecreated', 'timemodified']);
         $roll->add_child($statuses);
         $statuses->add_child($status);
         // Sessions are activity structure, not user data: always written, like the statuses.

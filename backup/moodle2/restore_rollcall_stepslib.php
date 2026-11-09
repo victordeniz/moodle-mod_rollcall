@@ -62,6 +62,7 @@ class restore_rollcall_activity_structure_step extends restore_activity_structur
      * Restores an attendance status of the roll, with a new id.
      *
      * A name that collides with one already restored gets a numeric suffix instead of failing the restore.
+     * Backups made before statuses had a weight give the default statuses their default weight, and 0 to the others.
      *
      * @param array $data
      */
@@ -69,6 +70,10 @@ class restore_rollcall_activity_structure_step extends restore_activity_structur
         global $DB;
         $data = (object)$data;
         $data->rollcallid = $this->get_new_parentid('rollcall');
+        if (!isset($data->weight)) {
+            $data->weight = \mod_rollcall\local\status_manager::default_weight($data->name,
+                \mod_rollcall\local\status_manager::lang_for_course($this->get_courseid()));
+        }
 
         $taken = array_map(fn($name) => \core_text::strtolower(trim($name)),
             $DB->get_fieldset_select('rollcall_status', 'name', 'rollcallid = ?', [$data->rollcallid]));
