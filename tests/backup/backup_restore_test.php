@@ -191,6 +191,27 @@ final class backup_restore_test extends \advanced_testcase {
         $this->assertSame([100, 50, 0, 0], $this->weights((int)$restored->id));
     }
 
+    public function test_restore_clamps_weight_out_of_range(): void {
+        global $CFG, $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course(['lang' => 'en']);
+        $roll = $gen->create_module('rollcall', ['course' => $course->id]);
+        status_manager::create((int)$roll->id, 'Custom', 70);
+
+        // A hand-edited backup must not produce weights outside 0-100.
+        $newcourseid = $this->duplicate_with_userdata($course, [], function(string $backupid) use ($CFG): void {
+            $files = glob($CFG->tempdir . '/backup/' . $backupid . '/activities/rollcall_*/rollcall.xml');
+            $xml = file_get_contents($files[0]);
+            $xml = str_replace('<weight>70</weight>', '<weight>150</weight>', $xml);
+            file_put_contents($files[0], str_replace('<weight>0</weight>', '<weight>-5</weight>', $xml));
+        });
+
+        $restored = $DB->get_record('rollcall', ['course' => $newcourseid], '*', MUST_EXIST);
+        $this->assertSame([100, 50, 0, 100], $this->weights((int)$restored->id));
+    }
+
     /**
      * Returns the weights of a roll's statuses in display order.
      *

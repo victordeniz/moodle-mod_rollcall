@@ -74,6 +74,8 @@ class restore_rollcall_activity_structure_step extends restore_activity_structur
             $data->weight = \mod_rollcall\local\status_manager::default_weight($data->name,
                 \mod_rollcall\local\status_manager::lang_for_course($this->get_courseid()));
         }
+        // The backup may have been edited by hand: keep the weight within 0-100.
+        $data->weight = max(0, min(100, (int)$data->weight));
 
         $taken = array_map(fn($name) => \core_text::strtolower(trim($name)),
             $DB->get_fieldset_select('rollcall_status', 'name', 'rollcallid = ?', [$data->rollcallid]));
