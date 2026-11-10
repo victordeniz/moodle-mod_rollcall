@@ -86,6 +86,7 @@ $string['legend'] = 'Students per category';
 $string['managecategories'] = 'Student categories';
 $string['modulename'] = 'Roll call';
 $string['modulename_help'] = 'The roll call activity lists the students of the course and lets teachers classify them into categories (for example repeater or Erasmus), each shown with its own colour. It also records sessions (individual classes) with their date, duration and group.';
+$string['modulename_link'] = '%%WWWROOT%%/mod/rollcall/manual/index.html';
 $string['modulenameplural'] = 'Roll calls';
 $string['nocategories'] = 'There are no categories yet.';
 $string['nopastsessions'] = 'There are no past sessions yet.';

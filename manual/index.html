@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lista de clase — Manual para el profesorado</title>
+<style>
+:root {
+    --text: #1d2125;
+    --muted: #5c6670;
+    --bg: #ffffff;
+    --surface: #f5f6f8;
+    --border: #dee2e6;
+    --accent: #0f6cbf;
+    --note-bg: #e7f1fa;
+    --warn-bg: #fff4e0;
+    --warn-border: #f0ad4e;
+}
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+main { max-width: 860px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 2rem; line-height: 1.2; margin: 0 0 16px; }
+h2 { font-size: 1.5rem; margin: 48px 0 12px; padding-top: 16px; border-top: 1px solid var(--border); }
+h3 { font-size: 1.15rem; margin: 28px 0 8px; }
+a { color: var(--accent); }
+img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 16px 0 24px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 0.95rem; }
+th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; vertical-align: top; }
+th { background: var(--surface); }
+.table-wrap { overflow-x: auto; }
+pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 16px;
+    overflow-x: auto;
+}
+.callout { border-left: 4px solid var(--accent); background: var(--note-bg); padding: 10px 16px; margin: 16px 0; border-radius: 0 6px 6px 0; }
+.callout.important { border-left-color: var(--warn-border); background: var(--warn-bg); }
+.callout p { margin: 0; }
+nav.toc { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 12px 24px; }
+nav.toc h2 { border: 0; margin: 0 0 4px; padding: 0; font-size: 1.1rem; }
+nav.toc ol { margin: 0; padding-left: 20px; }
+dl.faq dt { font-weight: 600; margin-top: 16px; }
+dl.faq dd { margin: 4px 0 0; }
+@media print {
+    h2 { break-after: avoid; }
+    img, table { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<main>
+
+<h1>Lista de clase — Manual para el profesorado</h1>
+
+<p>La <strong>Lista de clase</strong> es una actividad de Moodle para pasar lista. Con ella puede:</p>
+<ul>
+    <li>ver a los alumnos del curso con un color según su categoría (repetidor, Erasmus…);</li>
+    <li>registrar las sesiones (clases) y marcar la asistencia de cada alumno;</li>
+    <li>consultar un informe con el porcentaje de asistencia de cada alumno.</li>
+</ul>
+<p>Los alumnos no ven la actividad ni sus datos.</p>
+
+<nav class="toc" aria-labelledby="indice">
+    <h2 id="indice">Índice</h2>
+    <ol>
+        <li><a href="#anadir">Añadir la actividad al curso</a></li>
+        <li><a href="#sesiones">Sesiones</a></li>
+        <li><a href="#pasar-lista">Pasar lista</a></li>
+        <li><a href="#alumnos">Alumnos y categorías</a></li>
+        <li><a href="#estados">Estados de asistencia y pesos</a></li>
+        <li><a href="#informe">Informe de asistencia</a></li>
+        <li><a href="#grupos">Grupos</a></li>
+        <li><a href="#roles">Qué puede hacer cada rol</a></li>
+        <li><a href="#copias">Copias de seguridad y reinicio del curso</a></li>
+        <li><a href="#faq">Preguntas frecuentes</a></li>
+    </ol>
+</nav>
+
+<h2 id="anadir">1. Añadir la actividad al curso</h2>
+<ol>
+    <li>Active el <strong>Modo de edición</strong> del curso.</li>
+    <li>En la sección que quiera, pulse <strong>Añadir una actividad o un recurso</strong> y elija <strong>Lista de clase</strong>.</li>
+    <li>Escriba un nombre (por ejemplo, «Lista de clase» o «Asistencia») y, si el curso tiene grupos, elija el <strong>Modo de grupo</strong> en <em>Ajustes comunes del módulo</em>.</li>
+    <li>Pulse <strong>Guardar cambios y mostrar</strong>.</li>
+</ol>
+<p>Al crearla, la actividad trae tres estados de asistencia: <strong>Presente</strong> (100), <strong>Retraso</strong> (50) y <strong>No asiste</strong> (0). Puede cambiarlos después (ver <a href="#estados">Estados de asistencia y pesos</a>).</p>
+<p>Dentro de la actividad verá estas pestañas:</p>
+<div class="table-wrap">
+<table>
+    <thead><tr><th>Pestaña</th><th>Para qué sirve</th></tr></thead>
+    <tbody>
+        <tr><td><strong>Lista de clase</strong></td><td>La portada: la lista de sesiones.</td></tr>
+        <tr><td><strong>Alumnos</strong></td><td>Ver y clasificar a los alumnos.</td></tr>
+        <tr><td><strong>Estados</strong></td><td>Configurar los estados de asistencia y sus pesos.</td></tr>
+        <tr><td><strong>Informe de asistencia</strong></td><td>Ver el porcentaje de asistencia de cada alumno.</td></tr>
+    </tbody>
+</table>
+</div>
+
+<h2 id="sesiones">2. Sesiones</h2>
+<p>Una <strong>sesión</strong> es una clase concreta: tiene nombre, fecha y hora, duración y grupo. La portada de la actividad muestra todas las sesiones, de la más reciente a la más antigua.</p>
+<img src="01-sesiones.png" alt="Lista de sesiones en la portada de la actividad">
+
+<h3>Crear una sesión</h3>
+<ol>
+    <li>Pulse <strong>Nueva sesión</strong>, al final de la lista.</li>
+    <li>Rellene el formulario:
+        <ul>
+            <li><strong>Nombre</strong>: se propone «Sesión» con la fecha de hoy; puede cambiarlo (por ejemplo, «Clase 7» o «Laboratorio»).</li>
+            <li><strong>Fecha y hora</strong>: cuándo empieza la clase. Se propone la hora actual.</li>
+            <li><strong>Duración (minutos)</strong>: de 1 a 1440. Se propone 60.</li>
+            <li><strong>Grupo</strong>: «Toda la actividad» o un grupo concreto (solo aparece si la actividad usa grupos).</li>
+        </ul>
+    </li>
+    <li>Pulse <strong>Guardar cambios</strong>.</li>
+</ol>
+<img src="02-nueva-sesion.png" alt="Formulario de nueva sesión">
+<div class="callout"><p><strong>Consejo:</strong> puede crear las sesiones del cuatrimestre por adelantado. Las sesiones futuras no cuentan en el informe hasta que llega su fecha.</p></div>
+
+<h3>Editar o borrar una sesión</h3>
+<p>En la columna <strong>Acciones</strong>:</p>
+<ul>
+    <li>el lápiz abre el mismo formulario para cambiar la sesión;</li>
+    <li>la papelera la borra.</li>
+</ul>
+<p>Si la sesión ya tiene asistencia registrada, Moodle le avisa de cuántos alumnos la tienen antes de borrarla. Al confirmar, esa asistencia se borra también.</p>
+
+<h2 id="pasar-lista">3. Pasar lista</h2>
+<p>Pulse el <strong>nombre de la sesión</strong> en la portada. Se abre la lista de alumnos de esa sesión, con un desplegable de estado en cada fila.</p>
+<img src="03-pasar-lista.png" alt="Pasar lista en una sesión">
+<ul>
+    <li><strong>Cada cambio se guarda al momento</strong>: no hay botón de guardar. Basta con elegir el estado en el desplegable.</li>
+    <li><strong>Sin estado</strong> significa que el alumno todavía no está marcado en esa sesión.</li>
+    <li><strong>Marcar a varios a la vez:</strong> marque las casillas de los alumnos (la casilla de la cabecera selecciona a todos los de la página). Después, abajo, en <strong>Con los alumnos seleccionados</strong>, elija un estado y pulse <strong>Aplicar</strong>.
+        <p>Por ejemplo, para pasar lista rápido: seleccione a todos, aplique <strong>Presente</strong> y cambie después solo a los que faltan.</p>
+    </li>
+    <li><strong>Mostrar</strong>: filtra por categoría (por ejemplo, solo los repetidores).</li>
+    <li><strong>Nombre / Apellido(s)</strong>: ordena la lista. Pulse otra vez para invertir el orden.</li>
+    <li>Si hay muchos alumnos, la lista se reparte en páginas. El número de alumnos por página lo fija la administración del sitio.</li>
+</ul>
+<p>Si la sesión es de un grupo, la lista muestra solo a los alumnos de ese grupo.</p>
+<p>Para volver a la portada, pulse <strong>Volver a las sesiones</strong>.</p>
+
+<h2 id="alumnos">4. Alumnos y categorías</h2>
+<p>La pestaña <strong>Alumnos</strong> muestra a todos los alumnos del curso. Cada alumno clasificado tiene su fila en un color y una etiqueta con su categoría. Arriba hay una leyenda con cuántos alumnos hay en cada categoría.</p>
+<img src="04-alumnos.png" alt="Pestaña Alumnos con las categorías">
+<p>Para <strong>clasificar</strong> a un alumno, elija su categoría en el desplegable de la columna <strong>Categoría</strong>. Se guarda al momento.</p>
+<p>Para clasificar a <strong>varios a la vez</strong>, márquelos con la casilla, elija la categoría en <strong>Con los alumnos seleccionados</strong> y pulse <strong>Aplicar</strong>. <strong>Regular</strong> quita la categoría.</p>
+<p>Tenga en cuenta:</p>
+<ul>
+    <li><strong>La clasificación es del curso</strong>, no de la actividad. Si el curso tiene varias Listas de clase, todas comparten la misma clasificación.</li>
+    <li><strong>Las categorías las define la administración del sitio</strong>, no el profesorado. Si necesita una categoría nueva, pídasela.</li>
+    <li>Solo el <strong>profesor con permiso de edición</strong> puede clasificar. El profesor sin permiso de edición ve los colores, pero no puede cambiarlos.</li>
+</ul>
+
+<h2 id="estados">5. Estados de asistencia y pesos</h2>
+<p>Cada Lista de clase tiene sus propios <strong>estados</strong> (Presente, Retraso…). Cada estado tiene un <strong>peso</strong>: un número de 0 a 100 que indica cuánto vale una sesión con ese estado si la sesión completa vale 100.</p>
+<div class="table-wrap">
+<table>
+    <thead><tr><th>Estado</th><th>Peso por defecto</th><th>Significado</th></tr></thead>
+    <tbody>
+        <tr><td>Presente</td><td>100</td><td>la sesión cuenta entera</td></tr>
+        <tr><td>Retraso</td><td>50</td><td>cuenta la mitad</td></tr>
+        <tr><td>No asiste</td><td>0</td><td>no cuenta</td></tr>
+    </tbody>
+</table>
+</div>
+<p>El peso es lo que usa el <a href="#informe">Informe de asistencia</a> para calcular el porcentaje.</p>
+<img src="05-estados.png" alt="Página de estados con sus pesos">
+<p>En la pestaña <strong>Estados</strong> puede:</p>
+<ul>
+    <li><strong>Añadir estado</strong>: por ejemplo, «Falta justificada» con peso 100, si las faltas justificadas no deben penalizar.</li>
+    <li><strong>Editar</strong> (lápiz): cambiar el nombre o el peso.</li>
+    <li><strong>Ordenar</strong> (flechas): el orden es el de los desplegables al pasar lista y el de las columnas del informe.</li>
+    <li><strong>Ocultar o mostrar</strong> (ojo): un estado oculto ya no aparece al pasar lista, pero la asistencia ya registrada con él se conserva y sigue contando en el informe.</li>
+    <li><strong>Borrar</strong> (papelera): solo se pueden borrar los estados que no se han usado nunca. Los demás solo se pueden ocultar.</li>
+    <li><strong>Restaurar estados por defecto</strong>: vuelve a crear Presente, Retraso y No asiste si alguno falta. No toca los estados que ya existen.</li>
+</ul>
+<img src="06-editar-estado.png" alt="Formulario para editar un estado">
+<p>El peso es obligatorio y tiene que ser un número entero entre 0 y 100.</p>
+<div class="callout important"><p><strong>Importante:</strong> el informe se calcula siempre con los pesos actuales. Si cambia el peso de un estado, cambian los porcentajes de todos los alumnos, también los de sesiones pasadas.</p></div>
+<p>Gestionar los estados requiere ser <strong>profesor con permiso de edición</strong>.</p>
+
+<h2 id="informe">6. Informe de asistencia</h2>
+<p>La pestaña <strong>Informe de asistencia</strong> muestra una fila por alumno con:</p>
+<ul>
+    <li>cuántas veces ha tenido cada estado (una columna por estado, con su peso entre paréntesis);</li>
+    <li><strong>Sin marcar</strong>: cuántas sesiones pasadas no tienen estado;</li>
+    <li><strong>Asistencia</strong>: su porcentaje de asistencia.</li>
+</ul>
+<img src="07-informe.png" alt="Informe de asistencia">
+
+<h3>Cómo se calcula el porcentaje</h3>
+<pre>porcentaje = suma de los pesos de sus estados / número de sesiones pasadas</pre>
+<ul>
+    <li><strong>Solo cuentan las sesiones pasadas</strong>, es decir, las que ya han empezado. Las sesiones futuras no cuentan.</li>
+    <li><strong>Una sesión pasada sin marcar cuenta como 0</strong> y se señala con el aviso ⚠ junto al número de <em>Sin marcar</em> y junto al porcentaje. Así sabe que el porcentaje puede subir cuando termine de pasar lista.</li>
+    <li>Si todavía no hay sesiones pasadas, el porcentaje se muestra como «—».</li>
+</ul>
+<p>Ejemplos con los datos de la captura (6 sesiones pasadas):</p>
+<div class="table-wrap">
+<table>
+    <thead><tr><th>Alumno</th><th>Estados</th><th>Cálculo</th><th>Asistencia</th></tr></thead>
+    <tbody>
+        <tr><td>Bruno</td><td>4 Presente, 2 Retraso</td><td>(4 × 100 + 2 × 50) / 6</td><td>83,3 %</td></tr>
+        <tr><td>Carmen</td><td>4 Presente, 2 No asiste</td><td>(4 × 100 + 2 × 0) / 6</td><td>66,7 %</td></tr>
+        <tr><td>Fernando</td><td>5 Presente, 1 Falta justificada</td><td>(5 × 100 + 1 × 100) / 6</td><td>100,0 %</td></tr>
+        <tr><td>Hugo</td><td>5 Presente, 1 sin marcar ⚠</td><td>(5 × 100 + 0) / 6</td><td>83,3 %</td></tr>
+    </tbody>
+</table>
+</div>
+
+<h3>Qué sesiones cuentan para cada alumno</h3>
+<p>A cada alumno le cuentan:</p>
+<ul>
+    <li>las sesiones de <strong>toda la actividad</strong>;</li>
+    <li>las sesiones de los <strong>grupos a los que pertenece ahora</strong>;</li>
+    <li>las sesiones de grupos que se han borrado.</li>
+</ul>
+<p>No le cuentan las sesiones de otros grupos. Por eso dos alumnos pueden tener un número distinto de sesiones.</p>
+<p>La <strong>fecha de matrícula no se tiene en cuenta</strong>: a un alumno que se matriculó tarde le cuentan como sin marcar las sesiones anteriores a su llegada. Usted decide cómo marcarlas, por ejemplo con un estado «No matriculado» de peso 100.</p>
+
+<h3>Filtrar y ordenar</h3>
+<ul>
+    <li><strong>Grupos</strong>: muestra solo a los alumnos de un grupo.</li>
+    <li><strong>Mostrar</strong>: filtra por categoría.</li>
+    <li><strong>Nombre / Apellido(s) / Asistencia</strong>: ordena por nombre, por apellidos o por porcentaje. Pulse otra vez para invertir el orden. Ordenar por <em>Asistencia</em> de menor a mayor es una forma rápida de ver quién falta más.</li>
+</ul>
+<p>El informe es de solo lectura y no se puede exportar todavía.</p>
+
+<h2 id="grupos">7. Grupos</h2>
+<p>Si la actividad usa grupos (modo de grupo <em>separados</em> o <em>visibles</em>), en la portada, en <em>Alumnos</em> y en el informe aparece un selector de grupo.</p>
+<ul>
+    <li>Una sesión puede ser de <strong>toda la actividad</strong> o de <strong>un grupo</strong>. Al pasar lista en una sesión de grupo, solo aparecen los alumnos de ese grupo.</li>
+    <li><strong>Sesiones de toda la actividad:</strong> solo las puede crear, editar o borrar quien tiene acceso a todos los grupos. Normalmente es el profesor con permiso de edición.</li>
+    <li><strong>Sesiones de un grupo:</strong> las puede gestionar un profesor de ese grupo.</li>
+    <li><strong>Grupos visibles:</strong> un profesor ve las sesiones de los demás grupos, pero no puede cambiarlas.</li>
+    <li><strong>Grupos borrados:</strong> si se borra un grupo, sus sesiones se conservan y aparecen como «Grupo eliminado». Solo las ve quien tiene acceso a todos los grupos.</li>
+</ul>
+
+<h2 id="roles">8. Qué puede hacer cada rol</h2>
+<div class="table-wrap">
+<table>
+    <thead><tr><th>Acción</th><th>Profesor</th><th>Profesor sin permiso de edición</th></tr></thead>
+    <tbody>
+        <tr><td>Añadir la actividad al curso</td><td>✔</td><td>—</td></tr>
+        <tr><td>Ver sesiones y alumnos</td><td>✔</td><td>✔</td></tr>
+        <tr><td>Crear, editar y borrar sesiones</td><td>✔</td><td>✔ (según los grupos)</td></tr>
+        <tr><td>Pasar lista</td><td>✔</td><td>✔ (según los grupos)</td></tr>
+        <tr><td>Clasificar alumnos</td><td>✔</td><td>—</td></tr>
+        <tr><td>Gestionar estados y pesos</td><td>✔</td><td>—</td></tr>
+        <tr><td>Ver el informe de asistencia</td><td>✔</td><td>✔</td></tr>
+    </tbody>
+</table>
+</div>
+<p>Los alumnos no ven nada de la actividad.</p>
+
+<h2 id="copias">9. Copias de seguridad y reinicio del curso</h2>
+<ul>
+    <li><strong>Copia de seguridad o duplicado de la actividad:</strong>
+        <ul>
+            <li>Las <strong>sesiones</strong> y los <strong>estados</strong>, con sus pesos, se copian siempre.</li>
+            <li>La <strong>asistencia</strong> solo se copia si la copia incluye datos de usuario.</li>
+            <li>La <strong>clasificación</strong> de los alumnos nunca se copia.</li>
+        </ul>
+    </li>
+    <li><strong>Reinicio del curso</strong> (para empezar un curso nuevo). Hay tres opciones, marcadas por defecto:
+        <ul>
+            <li>borrar la clasificación de los alumnos;</li>
+            <li>borrar la asistencia registrada (se conservan las sesiones);</li>
+            <li>borrar todas las sesiones.</li>
+        </ul>
+        <p>Los estados no se tocan.</p>
+    </li>
+</ul>
+
+<h2 id="faq">10. Preguntas frecuentes</h2>
+<dl class="faq">
+    <dt>¿Tengo que pulsar «Guardar» al pasar lista?</dt>
+    <dd>No. Cada cambio de estado se guarda en el momento.</dd>
+
+    <dt>Un alumno tiene ⚠ en el informe. ¿Qué significa?</dt>
+    <dd>Que tiene sesiones pasadas sin marcar, que cuentan como 0. Abra esas sesiones y márquelo.</dd>
+
+    <dt>He cambiado el peso de «Retraso» y han cambiado todos los porcentajes. ¿Es normal?</dt>
+    <dd>Sí. El informe no guarda porcentajes: los calcula cada vez con los pesos actuales.</dd>
+
+    <dt>No puedo borrar un estado.</dt>
+    <dd>Ya se ha usado para registrar asistencia. Ocúltelo con el icono del ojo: deja de aparecer al pasar lista y la asistencia ya registrada se conserva.</dd>
+
+    <dt>No veo la pestaña «Estados» ni puedo clasificar alumnos.</dt>
+    <dd>Esas funciones requieren ser profesor con permiso de edición.</dd>
+
+    <dt>Necesito una categoría de alumnos nueva.</dt>
+    <dd>Las categorías son comunes a todo el campus y las gestiona la administración del sitio. Pídasela.</dd>
+</dl>
+
+</main>
+</body>
+</html>
