@@ -2,7 +2,7 @@
 
 Actividad de Moodle 5.2 para pasar lista de alumnos. Muestra al profesorado los alumnos del curso diferenciados por color según su categoría (repetidor, Erasmus u otras que defina el centro) y permite clasificarlos. Cada lista de clase registra además sus sesiones (clases concretas).
 
-Manual de uso para el profesorado, con capturas: [MANUAL.md](MANUAL.md).
+Manual de uso para el profesorado, con capturas: [manual/index.html](manual/index.html) (también enlazado desde «Más ayuda» en el selector de actividades).
 
 ## Qué hace (v1)
 
