@@ -19,7 +19,15 @@ Manual de uso para el profesorado, con capturas: [manual/index.html](manual/inde
   - Cuentan las sesiones que ya han empezado (fecha de inicio anterior o igual a ahora) de toda la actividad, de los grupos a los que el alumno pertenece ahora y de los grupos eliminados. No se tiene en cuenta la fecha de matriculación.
   - Porcentaje = suma de los pesos de los estados del alumno / número de esas sesiones. Una sesión sin marcar cuenta como 0 y se señala con un aviso. Sin sesiones pasadas se muestra «—».
   - Se calcula al abrir el informe con los pesos actuales: cambiar el peso de un estado cambia todos los porcentajes. Los estados ocultos siguen contando con su peso y aparecen como columna si algún alumno los tiene.
+- **Calificación** (opcional; sección *Calificación* de los ajustes de la actividad): tipo «Ninguna» (por defecto) o «Puntuación» con su máximo; no se admiten escalas. Con puntuación, la actividad tiene un elemento en el libro de calificaciones.
+  - Nota del alumno = máximo × porcentaje del informe de asistencia / 100, con las mismas reglas que el informe (`\mod_rollcall\local\grades` usa `report::summarise()`). Un alumno sin sesiones pasadas queda sin nota, no con un 0.
+  - Las notas **no se actualizan solas**. Las envía al libro quien tenga `mod/rollcall:updategrades`, con el botón «Actualizar calificaciones» de la portada de sesiones, que recalcula a todos los alumnos de la lista de la actividad (sin regla de grupos) y muestra la fecha del último envío (`rollcall.gradessynced`).
+  - Excepciones: al cambiar el máximo en los ajustes (eligiendo reescalar) las notas se reenvían sobre el máximo nuevo, y el propio Moodle pide las notas al módulo (`rollcall_update_grades()`) cuando se renombra o duplica la actividad o se fuerza un recálculo desde el libro; el resultado es el mismo que el del botón.
+  - Los alumnos que ya no están en la lista (p. ej. matrícula suspendida) conservan la nota que tuvieran. Si se les **desmatricula**, es Moodle quien borra sus calificaciones. Una nota anulada a mano en el libro no se pisa.
+  - Si el profesor activa la calificación, cada alumno ve su nota de asistencia en su informe de calificaciones (salvo que el elemento se oculte en el libro). Dentro de la actividad los alumnos siguen sin ver nada.
 - **Ciclo de vida**:
+  - El reinicio del curso, si borra la asistencia o las sesiones, vacía también las notas de la actividad en el libro y la fecha del último envío.
+  - La copia de seguridad incluye el ajuste de calificación. Las notas van con los datos de usuario (las guarda Moodle); sin datos de usuario, la copia queda sin notas enviadas. Una copia anterior a esta versión se restaura sin calificación.
   - Borrar el curso borra sus clasificaciones.
   - El reinicio del curso borra las clasificaciones (opción marcada por defecto), la asistencia registrada (opción «Borrar la asistencia registrada (conservar las sesiones)», marcada por defecto) y las sesiones (opción «Borrar todas las sesiones», también marcada por defecto; al borrar las sesiones se borra también su asistencia).
   - Borrar una sesión avisa de cuántos alumnos tienen asistencia registrada y, al confirmar, la borra junto con la sesión.
@@ -28,7 +36,7 @@ Manual de uso para el profesorado, con capturas: [manual/index.html](manual/inde
   - La asistencia solo se incluye en la copia (y en el duplicado) si se incluyen datos de usuario.
   - Las sesiones **siempre** se incluyen en la copia de seguridad y en el duplicado de la actividad, también sin datos de usuario. Al restaurar, el grupo se reasigna con el mapeo de grupos; si el grupo no está incluido en la copia o no tiene correspondencia en el mapeo (por ejemplo, una copia sin grupos), la sesión pasa a «Toda la actividad». Las fechas se desplazan con la fecha de inicio del curso, como el resto de fechas de Moodle.
 
-Fuera de la v1: categorías ligadas a cohortes (el cálculo está centralizado en `\mod_rollcall\local\classification` para añadirlas), tipos de sesión y series de sesiones, detalle por sesiones y exportación del informe, calificaciones, app móvil.
+Fuera de la v1: categorías ligadas a cohortes (el cálculo está centralizado en `\mod_rollcall\local\classification` para añadirlas), tipos de sesión y series de sesiones, detalle por sesiones y exportación del informe, actualización automática de las calificaciones, app móvil.
 
 ## Sesiones y grupos
 
@@ -54,6 +62,7 @@ La regla está en un solo sitio (`\mod_rollcall\local\session_manager::can_manag
 | `mod/rollcall:takeattendance` | teacher, editingteacher, manager | pasar lista en una sesión (con la misma regla de grupo que `managesessions`; es independiente de ella) |
 | `mod/rollcall:managestatuses` | editingteacher, manager | gestionar los estados de asistencia y sus pesos |
 | `mod/rollcall:viewreport` | teacher, editingteacher, manager | ver el informe de asistencia |
+| `mod/rollcall:updategrades` | teacher, editingteacher, manager | enviar las notas de asistencia al libro de calificaciones (sin regla de grupo) |
 | `mod/rollcall:belisted` | student | aparecer en el listado de alumnos |
 
 ## Privacidad y auditoría
@@ -61,6 +70,8 @@ La regla está en un solo sitio (`\mod_rollcall\local\session_manager::can_manag
 La asistencia (`rollcall_attendance`) es dato de usuario: el proveedor de privacidad la exporta y la borra por actividad. La tabla no guarda quién marcó a cada alumno; eso queda solo en el registro de eventos (evento `attendance_updated`).
 
 La tabla `rollcall_session` no tiene `usermodified` (igual que `rollcall_status`), así que el proveedor de privacidad no cambia. Quién creó, modificó o borró cada sesión queda en el registro de eventos: `session_created`, `session_updated` y `session_deleted`, en contexto de módulo, con el id de la sesión como `objectid` y el grupo en `other['groupid']`.
+
+Las notas de asistencia las guarda el libro de calificaciones: el proveedor de privacidad declara el enlace con `core_grades`, que es quien las exporta y las borra. Cada nota enviada queda en el registro como `user_graded` (evento del core).
 
 El informe no guarda nada. Abrirlo dispara el evento `report_viewed` en contexto de módulo.
 

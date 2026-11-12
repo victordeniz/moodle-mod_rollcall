@@ -83,6 +83,7 @@ dl.faq dd { margin: 4px 0 0; }
         <li><a href="#alumnos">Alumnos y categorías</a></li>
         <li><a href="#estados">Estados de asistencia y pesos</a></li>
         <li><a href="#informe">Informe de asistencia</a></li>
+        <li><a href="#calificaciones">Calificación en el libro de calificaciones</a></li>
         <li><a href="#grupos">Grupos</a></li>
         <li><a href="#roles">Qué puede hacer cada rol</a></li>
         <li><a href="#copias">Copias de seguridad y reinicio del curso</a></li>
@@ -242,7 +243,31 @@ dl.faq dd { margin: 4px 0 0; }
 </ul>
 <p>El informe es de solo lectura y no se puede exportar todavía.</p>
 
-<h2 id="grupos">7. Grupos</h2>
+<h2 id="calificaciones">7. Calificación en el libro de calificaciones</h2>
+<p>Si quiere que la asistencia cuente en la nota final del curso, la actividad puede enviar una nota por alumno al libro de calificaciones. Es opcional: mientras no la active, no hay nota.</p>
+<h3>Activar la calificación</h3>
+<ol>
+    <li>Abra <strong>Configuración</strong> en la actividad.</li>
+    <li>En <strong>Calificación</strong>, elija el tipo <strong>Puntuación</strong> y la <strong>calificación máxima</strong> (por ejemplo, 10). No se pueden usar escalas.</li>
+    <li>Guarde. La actividad aparece como una columna más en el libro de calificaciones del curso, donde puede decidir cuánto pesa en el total.</li>
+</ol>
+<p>La nota de cada alumno es su porcentaje del <a href="#informe">Informe de asistencia</a> aplicado al máximo: con un máximo de 10, un alumno con un 85 % tiene un 8,5. Un alumno sin ninguna sesión pasada queda sin nota.</p>
+<h3>Enviar las notas</h3>
+<img src="08-calificaciones.png" alt="Portada de sesiones con la fecha del último envío y el botón Actualizar calificaciones">
+<ol>
+    <li>En la portada de la actividad, pulse <strong>Actualizar calificaciones</strong>.</li>
+    <li>Aparece el aviso «Calificaciones actualizadas: N alumnos» y, sobre el botón, la fecha y hora del envío.</li>
+    <li>Las notas se ven en el libro de calificaciones del curso.</li>
+</ol>
+<div class="callout important"><p><strong>Importante:</strong> las notas <strong>no se actualizan solas</strong>. Si pasa lista, cambia el peso de un estado o crea sesiones, el libro sigue con las notas del último envío hasta que vuelva a pulsar el botón. Púlselo siempre <strong>antes de cerrar las notas del curso</strong>.</p></div>
+<ul>
+    <li>El botón recalcula a todos los alumnos de la actividad, sea cual sea el grupo que esté viendo.</li>
+    <li>Si cambia la calificación máxima en la configuración, las notas se vuelven a enviar sobre el máximo nuevo.</li>
+    <li>Si corrige a mano la nota de un alumno en el libro de calificaciones, el botón no la cambia.</li>
+    <li>Cada alumno ve su nota de asistencia en su informe de calificaciones, como la de cualquier otra actividad. Si no quiere que la vean, oculte la columna en el libro.</li>
+</ul>
+
+<h2 id="grupos">8. Grupos</h2>
 <p>Si la actividad usa grupos (modo de grupo <em>separados</em> o <em>visibles</em>), en la portada, en <em>Alumnos</em> y en el informe aparece un selector de grupo.</p>
 <ul>
     <li>Una sesión puede ser de <strong>toda la actividad</strong> o de <strong>un grupo</strong>. Al pasar lista en una sesión de grupo, solo aparecen los alumnos de ese grupo.</li>
@@ -252,7 +277,7 @@ dl.faq dd { margin: 4px 0 0; }
     <li><strong>Grupos borrados:</strong> si se borra un grupo, sus sesiones se conservan y aparecen como «Grupo eliminado». Solo las ve quien tiene acceso a todos los grupos.</li>
 </ul>
 
-<h2 id="roles">8. Qué puede hacer cada rol</h2>
+<h2 id="roles">9. Qué puede hacer cada rol</h2>
 <div class="table-wrap">
 <table>
     <thead><tr><th>Acción</th><th>Profesor</th><th>Profesor sin permiso de edición</th></tr></thead>
@@ -264,18 +289,21 @@ dl.faq dd { margin: 4px 0 0; }
         <tr><td>Clasificar alumnos</td><td>✔</td><td>—</td></tr>
         <tr><td>Gestionar estados y pesos</td><td>✔</td><td>—</td></tr>
         <tr><td>Ver el informe de asistencia</td><td>✔</td><td>✔</td></tr>
+        <tr><td>Activar la calificación de la actividad</td><td>✔</td><td>—</td></tr>
+        <tr><td>Actualizar calificaciones</td><td>✔</td><td>✔</td></tr>
     </tbody>
 </table>
 </div>
-<p>Los alumnos no ven nada de la actividad.</p>
+<p>Los alumnos no ven nada de la actividad. Si activa la calificación, ven su nota de asistencia en su informe de calificaciones.</p>
 
-<h2 id="copias">9. Copias de seguridad y reinicio del curso</h2>
+<h2 id="copias">10. Copias de seguridad y reinicio del curso</h2>
 <ul>
     <li><strong>Copia de seguridad o duplicado de la actividad:</strong>
         <ul>
             <li>Las <strong>sesiones</strong> y los <strong>estados</strong>, con sus pesos, se copian siempre.</li>
             <li>La <strong>asistencia</strong> solo se copia si la copia incluye datos de usuario.</li>
             <li>La <strong>clasificación</strong> de los alumnos nunca se copia.</li>
+            <li>El ajuste de <strong>calificación</strong> se copia siempre; las notas enviadas, solo con datos de usuario.</li>
         </ul>
     </li>
     <li><strong>Reinicio del curso</strong> (para empezar un curso nuevo). Hay tres opciones, marcadas por defecto:
@@ -284,12 +312,15 @@ dl.faq dd { margin: 4px 0 0; }
             <li>borrar la asistencia registrada (se conservan las sesiones);</li>
             <li>borrar todas las sesiones.</li>
         </ul>
-        <p>Los estados no se tocan.</p>
+        <p>Los estados no se tocan. Si se borra la asistencia o las sesiones, también se vacían las notas de la actividad en el libro de calificaciones.</p>
     </li>
 </ul>
 
-<h2 id="faq">10. Preguntas frecuentes</h2>
+<h2 id="faq">11. Preguntas frecuentes</h2>
 <dl class="faq">
+    <dt>He pasado lista y la nota del libro de calificaciones no ha cambiado. ¿Por qué?</dt>
+    <dd>Porque las notas solo se envían al pulsar <strong>Actualizar calificaciones</strong> en la portada de la actividad. Ver <a href="#calificaciones">Calificación en el libro de calificaciones</a>.</dd>
+
     <dt>¿Tengo que pulsar «Guardar» al pasar lista?</dt>
     <dd>No. Cada cambio de estado se guarda en el momento.</dd>
 
