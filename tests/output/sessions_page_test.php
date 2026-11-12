@@ -132,4 +132,59 @@ final class sessions_page_test extends \advanced_testcase {
         );
         $this->assertFalse(session_manager::can_take($cm, $other));
     }
+
+    /**
+     * Tests the block to update the grades depends on the grade of the roll and on the capability.
+     */
+    public function test_sessions_page_grades_block(): void {
+        global $DB, $PAGE;
+        $this->resetAfterTest();
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course();
+        $plain = $gen->create_module('rollcall', ['course' => $course->id]);
+        $graded = $gen->create_module('rollcall', ['course' => $course->id, 'grade' => 10]);
+        $editing = $gen->create_and_enrol($course, 'editingteacher');
+        $teacher = $gen->create_and_enrol($course, 'teacher');
+        $student = $gen->create_and_enrol($course, 'student');
+        $renderer = $PAGE->get_renderer('core');
+        $page = fn(int $cmid) => new sessions_page(get_fast_modinfo($course->id)->get_cm($cmid), 0, 0);
+
+        // A roll without a grade has no block.
+        $this->setUser($editing);
+        $this->assertNull($page($plain->cmid)->export_for_template($renderer)['grades']);
+        $this->assertStringNotContainsString('updategrades', $renderer->render($page($plain->cmid)));
+
+        // Never sent.
+        $data = $page($graded->cmid)->export_for_template($renderer);
+        $this->assertNull($data['grades']['synced']);
+        $this->assertSame((int)$graded->cmid, $data['grades']['id']);
+        $this->assertSame(0, $data['grades']['group']);
+        $this->assertSame(sesskey(), $data['grades']['sesskey']);
+        $html = $renderer->render($page($graded->cmid));
+        $this->assertStringContainsString('method="post"', $html);
+        $this->assertStringContainsString('name="action" value="updategrades"', $html);
+        $this->assertStringContainsString(get_string('gradesneversynced', 'mod_rollcall'), $html);
+
+        // Sent before: the time is shown.
+        $DB->set_field('rollcall', 'gradessynced', 1000, ['id' => $graded->id]);
+        $when = userdate(1000, get_string('strftimedatetimeshort', 'langconfig'));
+        $this->assertSame($when, $page($graded->cmid)->export_for_template($renderer)['grades']['synced']);
+        $this->assertStringContainsString(
+            get_string('gradeslastsynced', 'mod_rollcall', $when),
+            $renderer->render($page($graded->cmid))
+        );
+
+        // The non-editing teacher can update the grades too; the student cannot.
+        $this->setUser($teacher);
+        $this->assertNotNull($page($graded->cmid)->export_for_template($renderer)['grades']);
+        $this->setUser($student);
+        $this->assertNull($page($graded->cmid)->export_for_template($renderer)['grades']);
+
+        // Nor a teacher whose capability is prohibited in the activity.
+        $roleid = (int)$DB->get_field('role', 'id', ['shortname' => 'teacher']);
+        assign_capability('mod/rollcall:updategrades', CAP_PROHIBIT, $roleid, \context_module::instance($graded->cmid));
+        $this->setUser($teacher);
+        $this->assertNull($page($graded->cmid)->export_for_template($renderer)['grades']);
+        $this->assertStringNotContainsString('updategrades', $renderer->render($page($graded->cmid)));
+    }
 }

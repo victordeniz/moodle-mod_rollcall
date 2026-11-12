@@ -26,6 +26,7 @@ require(__DIR__ . '/../../config.php');
 
 use core\output\notification;
 use mod_rollcall\local\attendance_manager;
+use mod_rollcall\local\grades;
 use mod_rollcall\local\session_manager;
 
 $id = required_param('id', PARAM_INT);
@@ -50,8 +51,24 @@ $PAGE->set_url($url);
 $PAGE->set_title(format_string($roll->name));
 $PAGE->set_heading(format_string($course->fullname));
 
-if ($action !== '' && $action !== 'delete') {
+if (!in_array($action, ['', 'delete', 'updategrades'], true)) {
     throw new moodle_exception('invalidaction', 'error');
+}
+if ($action === 'updategrades') {
+    // The grades reach the gradebook only on request: every listed student is calculated again.
+    require_sesskey();
+    require_capability('mod/rollcall:updategrades', $context);
+    if ((int)$roll->grade <= 0) {
+        throw new moodle_exception('nogradeinactivity', 'mod_rollcall');
+    }
+    $count = grades::sync($cm);
+    $group = optional_param('group', 0, PARAM_INT);
+    redirect(
+        new moodle_url($url, $group > 0 ? ['group' => $group] : []),
+        get_string('gradesupdated', 'mod_rollcall', $count),
+        null,
+        notification::NOTIFY_SUCCESS
+    );
 }
 if ($action === 'delete') {
     require_sesskey();
