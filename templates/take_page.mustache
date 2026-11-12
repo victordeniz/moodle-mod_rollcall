@@ -107,6 +107,10 @@
 
     {{#empty}}
     <p class="alert alert-info">{{#str}}nostudents, mod_rollcall{{/str}}</p>
+    {{! Paged and nobody passes the filter: the way back to the whole list is still offered. }}
+    {{#modeurl}}
+    <p><a href="{{modeurl}}" data-region="mod_rollcall-take-mode">{{modelabel}}</a></p>
+    {{/modeurl}}
     {{/empty}}
     {{^empty}}
     <table class="table generaltable mod_rollcall-table" data-region="mod_rollcall-take-table">

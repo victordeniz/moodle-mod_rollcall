@@ -210,6 +210,13 @@ final class take_page_test extends \advanced_testcase {
         // Nothing to switch when everybody fits in one page.
         $html = $renderer->render(new take_page($this->cm, $this->session, 'all', 'lastname', 'asc', 0, 5));
         $this->assertStringNotContainsString('mod_rollcall-take-mode', $html);
+
+        // The paged mode can be left even when the filter matches nobody.
+        $empty = $this->getDataGenerator()->get_plugin_generator('mod_rollcall')->create_category(['name' => 'E', 'color' => 'blue']);
+        $filter = (string)$empty->get('id');
+        $html = $renderer->render(new take_page($this->cm, $this->session, $filter, 'lastname', 'asc', 0, 2, true));
+        $this->assertStringContainsString('There are no students to show.', $html);
+        $this->assertStringContainsString('Show all (0)', $html);
     }
 
     /**
