@@ -25,7 +25,7 @@ use mod_rollcall\local\status_manager;
 use mod_rollcall\persistent\session;
 
 /**
- * Take attendance: the students of a session with their status, filterable, sortable and paged.
+ * Take attendance: the students of a session with their status, filterable, sortable and paged on request.
  *
  * @package    mod_rollcall
  * @copyright  2026 Victor Deniz <fitodeniz@gmail.com>
@@ -45,8 +45,9 @@ class take_page implements \renderable, \templatable {
      * @param string $filter 'all', 'regular' or a category id
      * @param string $sort 'lastname' or 'firstname'
      * @param string $dir 'asc' or 'desc'
-     * @param int $page Zero-based page, clamped to the existing ones
-     * @param int $perpage Students per page
+     * @param int $page Zero-based page, clamped to the existing ones; ignored unless paged
+     * @param int $perpage Students per page when paged
+     * @param bool $paged Whether the students are split in pages; otherwise all of them are shown
      */
     public function __construct(
         /** @var \cm_info The roll */
@@ -61,8 +62,10 @@ class take_page implements \renderable, \templatable {
         protected string $dir,
         /** @var int Zero-based page */
         protected int $page,
-        /** @var int Students per page */
+        /** @var int Students per page when paged */
         protected int $perpage,
+        /** @var bool Whether the students are split in pages */
+        protected bool $paged = false,
     ) {
     }
 
@@ -112,9 +115,13 @@ class take_page implements \renderable, \templatable {
         $matching = $dir === 'desc' ? array_reverse($matching, true) : $matching;
 
         $total = count($matching);
-        $lastpage = $total > 0 ? (int)ceil($total / $this->perpage) - 1 : 0;
-        $page = max(0, min($this->page, $lastpage));
-        $pagestudents = array_slice($matching, $page * $this->perpage, $this->perpage, true);
+        $page = 0;
+        $pagestudents = $matching;
+        if ($this->paged) {
+            $lastpage = $total > 0 ? (int)ceil($total / $this->perpage) - 1 : 0;
+            $page = max(0, min($this->page, $lastpage));
+            $pagestudents = array_slice($matching, $page * $this->perpage, $this->perpage, true);
+        }
 
         $current = attendance_manager::get_for_users($sessionid, array_keys($pagestudents));
         $statuses = status_manager::get_all($rollcallid);
@@ -168,7 +175,19 @@ class take_page implements \renderable, \templatable {
         }
 
         $params = ['sessionid' => $sessionid, 'filter' => $filter, 'sort' => $sort, 'dir' => $dir];
-        $baseurl = new \moodle_url('/mod/rollcall/take.php', $params);
+        $allurl = new \moodle_url('/mod/rollcall/take.php', $params);
+        $pagedurl = new \moodle_url($allurl, ['paged' => 1]);
+        // The links of the page keep its mode; the mode link switches to the other one, from its first page.
+        $baseurl = $this->paged ? $pagedurl : $allurl;
+        $modeurl = null;
+        $modelabel = null;
+        if ($this->paged) {
+            $modeurl = $allurl->out(false);
+            $modelabel = get_string('showall', 'mod_rollcall', $total);
+        } else if ($total > $this->perpage) {
+            $modeurl = $pagedurl->out(false);
+            $modelabel = get_string('paginate', 'mod_rollcall', $this->perpage);
+        }
         $sortlinks = [];
         foreach ([self::SORT_FIRSTNAME, self::SORT_LASTNAME] as $key) {
             $active = $key === $sort;
@@ -206,7 +225,10 @@ class take_page implements \renderable, \templatable {
             'sortlinks' => $sortlinks,
             'rows' => $rows,
             'bulkstatuses' => array_merge([$nostatus], $visible),
-            'pagingbar' => $output->paging_bar($total, $page, $this->perpage, $baseurl),
+            'paged' => $this->paged,
+            'pagingbar' => $this->paged ? $output->paging_bar($total, $page, $this->perpage, $baseurl) : '',
+            'modeurl' => $modeurl,
+            'modelabel' => $modelabel,
             'hasstatuses' => !empty($visible),
             'managestatusesurl' => has_capability('mod/rollcall:managestatuses', $context)
                 ? (new \moodle_url('/mod/rollcall/statuses.php', ['id' => $cm->id]))->out(false) : null,
