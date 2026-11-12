@@ -192,6 +192,27 @@ final class take_page_test extends \advanced_testcase {
     }
 
     /**
+     * Tests the template shows the mode link and keeps the paged mode when filtering.
+     */
+    public function test_template_mode_link(): void {
+        global $PAGE;
+        $renderer = $PAGE->get_renderer('core');
+
+        $html = $renderer->render(new take_page($this->cm, $this->session, 'all', 'lastname', 'asc', 0, 2));
+        $this->assertStringContainsString('data-region="mod_rollcall-take-mode"', $html);
+        $this->assertStringContainsString('Paginate (2 per page)', $html);
+        $this->assertStringNotContainsString('name="paged"', $html);
+
+        $html = $renderer->render(new take_page($this->cm, $this->session, 'all', 'lastname', 'asc', 0, 2, true));
+        $this->assertStringContainsString('Show all (5)', $html);
+        $this->assertStringContainsString('<input type="hidden" name="paged" value="1">', $html);
+
+        // Nothing to switch when everybody fits in one page.
+        $html = $renderer->render(new take_page($this->cm, $this->session, 'all', 'lastname', 'asc', 0, 5));
+        $this->assertStringNotContainsString('mod_rollcall-take-mode', $html);
+    }
+
+    /**
      * Tests the link to manage statuses depends on the capability.
      */
     public function test_manage_statuses_url(): void {

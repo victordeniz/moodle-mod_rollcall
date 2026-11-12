@@ -33,7 +33,9 @@ $filter = optional_param('filter', roll_page::FILTER_ALL, PARAM_ALPHANUM);
 $sort = optional_param('sort', take_page::SORT_LASTNAME, PARAM_ALPHA);
 $sort = $sort === take_page::SORT_FIRSTNAME ? take_page::SORT_FIRSTNAME : take_page::SORT_LASTNAME;
 $dir = optional_param('dir', 'asc', PARAM_ALPHA) === 'desc' ? 'desc' : 'asc';
-$page = max(0, optional_param('page', 0, PARAM_INT));
+// Every student is shown unless paging is requested; the page only matters when paged.
+$paged = (bool)optional_param('paged', 0, PARAM_BOOL);
+$page = $paged ? max(0, optional_param('page', 0, PARAM_INT)) : 0;
 
 // The roll is derived from the session, so a session id cannot be used against another activity.
 $rollcallid = (int)$DB->get_field('rollcall_session', 'rollcallid', ['id' => $sessionid], MUST_EXIST);
@@ -47,7 +49,7 @@ if (!session_manager::can_take($cm, $session)) {
 }
 
 $url = new moodle_url('/mod/rollcall/take.php', ['sessionid' => $sessionid]);
-foreach (['filter' => $filter, 'sort' => $sort, 'dir' => $dir, 'page' => $page] as $name => $value) {
+foreach (['filter' => $filter, 'sort' => $sort, 'dir' => $dir, 'paged' => (int)$paged, 'page' => $page] as $name => $value) {
     if ($value !== roll_page::FILTER_ALL && $value !== 0 && !($name === 'sort' && $value === take_page::SORT_LASTNAME)
             && !($name === 'dir' && $value === 'asc')) {
         $url->param($name, $value);
@@ -61,7 +63,7 @@ $PAGE->navbar->add(get_string('sessions', 'mod_rollcall'), new moodle_url('/mod/
 $PAGE->navbar->add($sessionname);
 
 $perpage = (int)get_config('mod_rollcall', 'perpage') ?: 25;
-$renderable = new take_page($cm, $session, $filter, $sort, $dir, $page, $perpage);
+$renderable = new take_page($cm, $session, $filter, $sort, $dir, $page, $perpage, $paged);
 
 // Always started: it does nothing without a table, and with students the per-row control can still clear
 // a status that is now hidden even when there are no visible statuses left.

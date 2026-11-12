@@ -36,7 +36,10 @@
     * sortlinks - list of {name, url, active, dir, arrow}
     * rows - list of {userid, fullname, picture, categoryname, color, hascategory, statusid, options}
     * bulkstatuses - list of {id, name}, "No status" (id 0) first
-    * pagingbar - HTML of the paging bar
+    * paged - whether the students are split in pages
+    * pagingbar - HTML of the paging bar, empty when not paged
+    * modeurl - URL that switches between all the students and pages, null if there is nothing to switch
+    * modelabel - text of that link
     * hasstatuses - whether there are visible statuses
     * managestatusesurl - URL of the statuses page, null if the user cannot manage them
     * empty - whether there are no rows
@@ -67,7 +70,10 @@
              "options": [{"id": 0, "name": "No status", "selected": false}, {"id": 1, "name": "Present", "selected": true}]}
         ],
         "bulkstatuses": [{"id": 0, "name": "No status"}, {"id": 1, "name": "Present"}],
+        "paged": false,
         "pagingbar": "",
+        "modeurl": "#",
+        "modelabel": "Paginate (25 per page)",
         "hasstatuses": true,
         "managestatusesurl": null,
         "empty": false
@@ -89,6 +95,7 @@
         <input type="hidden" name="sessionid" value="{{sessionid}}">
         <input type="hidden" name="sort" value="{{sort}}">
         <input type="hidden" name="dir" value="{{dir}}">
+        {{#paged}}<input type="hidden" name="paged" value="1">{{/paged}}
         <label for="mod_rollcall-filter-{{uniqid}}" class="mb-0">{{#str}}filter, mod_rollcall{{/str}}</label>
         <select id="mod_rollcall-filter-{{uniqid}}" name="filter" class="form-select w-auto">
             {{#filters}}
@@ -146,6 +153,9 @@
     </table>
 
     {{{pagingbar}}}
+    {{#modeurl}}
+    <p><a href="{{modeurl}}" data-region="mod_rollcall-take-mode">{{modelabel}}</a></p>
+    {{/modeurl}}
 
     <div class="d-flex flex-wrap gap-2 align-items-center" data-region="bulk">
         <label for="mod_rollcall-bulk-{{uniqid}}" class="mb-0">{{#str}}withselected, mod_rollcall{{/str}}</label>
