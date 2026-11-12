@@ -216,8 +216,62 @@ final class lib_test extends \advanced_testcase {
         $this->assertSame(MOD_PURPOSE_ADMINISTRATION, rollcall_supports(FEATURE_MOD_PURPOSE));
         $this->assertTrue(rollcall_supports(FEATURE_GROUPS));
         $this->assertTrue(rollcall_supports(FEATURE_BACKUP_MOODLE2));
-        $this->assertFalse(rollcall_supports(FEATURE_GRADE_HAS_GRADE));
+        $this->assertTrue(rollcall_supports(FEATURE_GRADE_HAS_GRADE));
         $this->assertFalse(rollcall_supports(FEATURE_COMPLETION_TRACKS_VIEWS));
         $this->assertNull(rollcall_supports(FEATURE_RATE));
+    }
+
+    /**
+     * Tests the grade item follows the grade setting of the activity.
+     */
+    public function test_grade_item_lifecycle(): void {
+        global $CFG, $DB;
+        require_once($CFG->libdir . '/gradelib.php');
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course();
+        $fetch = fn(int $id) => \grade_item::fetch(['itemtype' => 'mod', 'itemmodule' => 'rollcall',
+            'iteminstance' => $id, 'itemnumber' => 0, 'courseid' => $course->id]);
+
+        // No grade by default.
+        $plain = $gen->create_module('rollcall', ['course' => $course->id]);
+        $this->assertSame(0, (int)$DB->get_field('rollcall', 'grade', ['id' => $plain->id]));
+        $this->assertSame(0, (int)$DB->get_field('rollcall', 'gradessynced', ['id' => $plain->id]));
+        $item = $fetch((int)$plain->id);
+        $this->assertTrue(!$item || (int)$item->gradetype === GRADE_TYPE_NONE);
+
+        // Points create a value item with that maximum.
+        $graded = $gen->create_module('rollcall', ['course' => $course->id, 'grade' => 10]);
+        $item = $fetch((int)$graded->id);
+        $this->assertSame(GRADE_TYPE_VALUE, (int)$item->gradetype);
+        $this->assertEqualsWithDelta(10.0, (float)$item->grademax, 0.0001);
+        $this->assertEqualsWithDelta(0.0, (float)$item->grademin, 0.0001);
+
+        // Editing the activity follows the setting.
+        $record = $DB->get_record('rollcall', ['id' => $graded->id]);
+        $record->instance = $record->id;
+        $record->grade = 0;
+        rollcall_update_instance($record);
+        $this->assertSame(GRADE_TYPE_NONE, (int)$fetch((int)$graded->id)->gradetype);
+
+        // Deleting the activity deletes its item.
+        course_delete_module($graded->cmid);
+        $this->assertFalse($fetch((int)$graded->id));
+    }
+
+    /**
+     * Tests who can update the grades.
+     */
+    public function test_updategrades_capability(): void {
+        $this->resetAfterTest();
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course();
+        $roll = $gen->create_module('rollcall', ['course' => $course->id]);
+        $context = \context_module::instance($roll->cmid);
+        foreach (['editingteacher' => true, 'teacher' => true, 'student' => false] as $role => $expected) {
+            $user = $gen->create_and_enrol($course, $role);
+            $this->assertSame($expected, has_capability('mod/rollcall:updategrades', $context, $user));
+        }
     }
 }

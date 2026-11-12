@@ -37,8 +37,8 @@ function rollcall_supports($feature) {
         case FEATURE_MOD_INTRO:
         case FEATURE_SHOW_DESCRIPTION:
         case FEATURE_BACKUP_MOODLE2:
-            return true;
         case FEATURE_GRADE_HAS_GRADE:
+            return true;
         case FEATURE_COMPLETION_TRACKS_VIEWS:
             return false;
         default:
@@ -58,7 +58,10 @@ function rollcall_add_instance(stdClass $data, $mform = null): int {
 
     $data->timecreated = time();
     $data->timemodified = $data->timecreated;
+    $data->grade = (int)($data->grade ?? 0);
     $id = $DB->insert_record('rollcall', $data);
+    $data->id = $id;
+    rollcall_grade_item_update($data);
 
     // The course module does not exist yet, so the defaults are created without events.
     \mod_rollcall\local\status_manager::add_missing_defaults(
@@ -80,7 +83,12 @@ function rollcall_update_instance(stdClass $data, $mform = null): bool {
 
     $data->id = $data->instance;
     $data->timemodified = time();
-    return $DB->update_record('rollcall', $data);
+    $data->grade = (int)($data->grade ?? 0);
+    // The time the grades were sent is not a setting of the form.
+    unset($data->gradessynced);
+    $DB->update_record('rollcall', $data);
+    rollcall_grade_item_update($data);
+    return true;
 }
 
 /**
@@ -93,15 +101,49 @@ function rollcall_update_instance(stdClass $data, $mform = null): bool {
  * @return bool
  */
 function rollcall_delete_instance($id): bool {
-    global $DB;
+    global $CFG, $DB;
 
-    if (!$DB->record_exists('rollcall', ['id' => $id])) {
+    $rollcall = $DB->get_record('rollcall', ['id' => $id], 'id, course');
+    if (!$rollcall) {
         return false;
     }
+    require_once($CFG->libdir . '/gradelib.php');
+    grade_update('mod/rollcall', $rollcall->course, 'mod', 'rollcall', $rollcall->id, 0, null, ['deleted' => 1]);
     \mod_rollcall\local\status_manager::delete_for_rollcall((int)$id);
     \mod_rollcall\local\session_manager::delete_for_rollcall((int)$id);
     $DB->delete_records('rollcall', ['id' => $id]);
     return true;
+}
+
+/**
+ * Creates or updates the grade item of a roll.
+ *
+ * A roll without a grade keeps an item of type "none", which the gradebook does not show.
+ *
+ * @param stdClass $rollcall The roll, with id, course, name and grade (and cmidnumber if known)
+ * @param array|string|null $grades Grades to send, 'reset' to delete every grade, or null for none
+ * @return int GRADE_UPDATE_OK, GRADE_UPDATE_FAILED, GRADE_UPDATE_MULTIPLE or GRADE_UPDATE_ITEM_LOCKED
+ */
+function rollcall_grade_item_update(stdClass $rollcall, $grades = null): int {
+    global $CFG;
+    require_once($CFG->libdir . '/gradelib.php');
+
+    $params = ['itemname' => $rollcall->name];
+    if (property_exists($rollcall, 'cmidnumber')) {
+        $params['idnumber'] = $rollcall->cmidnumber;
+    }
+    if ((int)$rollcall->grade > 0) {
+        $params['gradetype'] = GRADE_TYPE_VALUE;
+        $params['grademax'] = (int)$rollcall->grade;
+        $params['grademin'] = 0;
+    } else {
+        $params['gradetype'] = GRADE_TYPE_NONE;
+    }
+    if ($grades === 'reset') {
+        $params['reset'] = true;
+        $grades = null;
+    }
+    return grade_update('mod/rollcall', $rollcall->course, 'mod', 'rollcall', $rollcall->id, 0, $grades, $params);
 }
 
 /**

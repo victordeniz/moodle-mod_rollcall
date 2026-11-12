@@ -45,7 +45,26 @@ class mod_rollcall_mod_form extends moodleform_mod {
         $mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');
         $this->standard_intro_elements();
 
+        // Optional grade: the attendance percentage over the maximum. A new roll has no grade.
+        $this->standard_grading_coursemodule_elements();
+        $mform->setDefault('grade', 0);
+
         $this->standard_coursemodule_elements();
         $this->add_action_buttons();
+    }
+
+    /**
+     * Validates the form: the grade is a number of points or none, never a scale.
+     *
+     * @param array $data
+     * @param array $files
+     * @return array Errors by element name
+     */
+    public function validation($data, $files) {
+        $errors = parent::validation($data, $files);
+        if (isset($data['grade']) && (int)$data['grade'] < 0) {
+            $errors['grade'] = get_string('scalesnotsupported', 'mod_rollcall');
+        }
+        return $errors;
     }
 }
