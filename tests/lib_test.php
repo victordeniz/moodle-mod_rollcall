@@ -256,7 +256,7 @@ final class lib_test extends \advanced_testcase {
         $this->assertSame(GRADE_TYPE_NONE, (int)$fetch((int)$graded->id)->gradetype);
 
         // Deleting the activity deletes its item.
-        course_delete_module($graded->cmid);
+        (new \core_courseformat\local\cmactions($course))->delete($graded->cmid);
         $this->assertFalse($fetch((int)$graded->id));
     }
 

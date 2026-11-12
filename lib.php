@@ -147,6 +147,38 @@ function rollcall_grade_item_update(stdClass $rollcall, $grades = null): int {
 }
 
 /**
+ * Sends the attendance grades of a roll to the gradebook.
+ *
+ * @param stdClass $rollcall The roll
+ * @param int $userid Only this user, or 0 for every listed student
+ * @param bool $nullifnone Not used: a student without past sessions never gets a grade
+ */
+function rollcall_update_grades(stdClass $rollcall, int $userid = 0, bool $nullifnone = true): void {
+    $cm = get_coursemodule_from_instance('rollcall', $rollcall->id, $rollcall->course, false, MUST_EXIST);
+    $cm = get_fast_modinfo($rollcall->course)->get_cm($cm->id);
+    \mod_rollcall\local\grades::sync($cm, $userid);
+}
+
+/**
+ * Sends the grades again after the maximum grade of a roll has changed.
+ *
+ * The grades are not scaled from the old ones: they are calculated again over the new maximum.
+ *
+ * @param stdClass $course
+ * @param stdClass $cm Course module of the roll
+ * @param float $oldmin
+ * @param float $oldmax
+ * @param float $newmin
+ * @param float $newmax
+ * @return bool Always true
+ */
+function rollcall_rescale_activity_grades($course, $cm, $oldmin, $oldmax, $newmin, $newmax): bool {
+    $cm = get_fast_modinfo($course)->get_cm($cm->id);
+    \mod_rollcall\local\grades::sync($cm);
+    return true;
+}
+
+/**
  * Adds the roll elements to the course reset form.
  *
  * @param MoodleQuickForm $mform
