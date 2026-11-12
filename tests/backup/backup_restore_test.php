@@ -387,4 +387,62 @@ final class backup_restore_test extends \advanced_testcase {
         $newsession = $DB->get_record('rollcall_session', ['rollcallid' => $newcm->instance], '*', MUST_EXIST);
         $this->assertSame(0, attendance_manager::count_for_session((int)$newsession->id));
     }
+
+    public function test_backup_restore_keeps_grade_setting(): void {
+        global $CFG, $DB;
+        require_once($CFG->libdir . '/gradelib.php');
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course();
+        $student = $gen->create_and_enrol($course, 'student');
+        $roll = $gen->create_module('rollcall', ['course' => $course->id, 'grade' => 10]);
+        $session = session_manager::create((int)$roll->id, 0, 'Whole', 1000, 3600);
+        $statuses = array_values(status_manager::get_all((int)$roll->id));
+        attendance_manager::set((int)$session->get('id'), (int)$statuses[0]->get('id'), [(int)$student->id]);
+        \mod_rollcall\local\grades::sync(get_fast_modinfo($course)->get_cm($roll->cmid), 0, 5000);
+
+        // With user data the grades and the time they were sent come along.
+        $newcourseid = $this->duplicate_with_userdata($course);
+        $restored = $DB->get_record('rollcall', ['course' => $newcourseid], '*', MUST_EXIST);
+        $this->assertSame(10, (int)$restored->grade);
+        $this->assertSame(5000, (int)$restored->gradessynced);
+        $grades = grade_get_grades($newcourseid, 'mod', 'rollcall', $restored->id, $student->id);
+        $this->assertEqualsWithDelta(10.0, (float)$grades->items[0]->grades[$student->id]->grade, 0.0001);
+
+        // Without user data the setting is kept, but no grade has been sent.
+        $course->shortname .= '_nousers';
+        $plaincourseid = $this->duplicate_with_userdata($course, ['users' => false]);
+        $copy = $DB->get_record('rollcall', ['course' => $plaincourseid], '*', MUST_EXIST);
+        $this->assertSame(10, (int)$copy->grade);
+        $this->assertSame(0, (int)$copy->gradessynced);
+        $item = \grade_item::fetch(['itemtype' => 'mod', 'itemmodule' => 'rollcall', 'iteminstance' => $copy->id,
+            'courseid' => $plaincourseid]);
+        $this->assertSame(GRADE_TYPE_VALUE, (int)$item->gradetype);
+        $this->assertEqualsWithDelta(10.0, (float)$item->grademax, 0.0001);
+        $this->assertFalse($item->has_grades());
+    }
+
+    public function test_restore_old_backup_without_grade(): void {
+        global $CFG, $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course();
+        $gen->create_module('rollcall', ['course' => $course->id, 'grade' => 10]);
+
+        // Backups made before the roll had a grade have neither element.
+        $newcourseid = $this->duplicate_with_userdata($course, [], function(string $backupid) use ($CFG): void {
+            $files = glob($CFG->tempdir . '/backup/' . $backupid . '/activities/rollcall_*/rollcall.xml');
+            $this->assertCount(1, $files);
+            $xml = file_get_contents($files[0]);
+            $this->assertStringContainsString('<grade>', $xml);
+            $this->assertStringContainsString('<gradessynced>', $xml);
+            file_put_contents($files[0], preg_replace('~<(grade|gradessynced)>[^<]*</\\1>~', '', $xml));
+        });
+
+        $restored = $DB->get_record('rollcall', ['course' => $newcourseid], '*', MUST_EXIST);
+        $this->assertSame(0, (int)$restored->grade);
+        $this->assertSame(0, (int)$restored->gradessynced);
+    }
 }

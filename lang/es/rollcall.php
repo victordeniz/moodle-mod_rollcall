@@ -108,6 +108,7 @@ $string['perpage'] = 'Alumnos por página';
 $string['perpage_desc'] = 'Tamaño de página del informe de asistencia, y de la página de pasar lista cuando su lista se pagina. Entre 1 y 500.';
 $string['pluginadministration'] = 'Administración de Lista de clase';
 $string['pluginname'] = 'Lista de clase';
+$string['privacy:metadata:core_grades'] = 'La calificación de asistencia del alumno se guarda en el libro de calificaciones.';
 $string['privacy:metadata:rollcall_attendance'] = 'Registros de asistencia de los alumnos en las sesiones de un pase de lista.';
 $string['privacy:metadata:rollcall_attendance:sessionid'] = 'La sesión a la que pertenece la asistencia.';
 $string['privacy:metadata:rollcall_attendance:statusid'] = 'El estado asignado al alumno.';

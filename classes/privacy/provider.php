@@ -63,6 +63,8 @@ class provider implements
             'timecreated' => 'privacy:metadata:rollcall_attendance:timecreated',
             'timemodified' => 'privacy:metadata:rollcall_attendance:timemodified',
         ], 'privacy:metadata:rollcall_attendance');
+        // The attendance grades are kept by the gradebook.
+        $collection->add_subsystem_link('core_grades', [], 'privacy:metadata:core_grades');
         return $collection;
     }
 

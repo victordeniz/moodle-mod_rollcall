@@ -109,6 +109,7 @@ $string['perpage'] = 'Students per page';
 $string['perpage_desc'] = 'Page size of the attendance report, and of the take attendance page when its list is paginated. Between 1 and 500.';
 $string['pluginadministration'] = 'Roll call administration';
 $string['pluginname'] = 'Roll call';
+$string['privacy:metadata:core_grades'] = 'The attendance grade of the student is stored in the gradebook.';
 $string['privacy:metadata:rollcall_attendance'] = 'Attendance records of students in the sessions of a roll.';
 $string['privacy:metadata:rollcall_attendance:sessionid'] = 'The session the attendance belongs to.';
 $string['privacy:metadata:rollcall_attendance:statusid'] = 'The status assigned to the student.';

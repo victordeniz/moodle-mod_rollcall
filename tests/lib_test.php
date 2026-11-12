@@ -274,4 +274,40 @@ final class lib_test extends \advanced_testcase {
             $this->assertSame($expected, has_capability('mod/rollcall:updategrades', $context, $user));
         }
     }
+
+    /**
+     * Tests the grades go away with the attendance in a course reset, and only then.
+     */
+    public function test_course_reset_clears_grades(): void {
+        global $CFG, $DB;
+        require_once($CFG->libdir . '/gradelib.php');
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course();
+        $roll = $gen->create_module('rollcall', ['course' => $course->id, 'grade' => 10]);
+        $cm = get_fast_modinfo($course)->get_cm($roll->cmid);
+        $user = $gen->create_and_enrol($course, 'student');
+        // The first default status is worth a whole session.
+        $statusid = (int)array_values(\mod_rollcall\local\status_manager::get_all((int)$roll->id))[0]->get('id');
+        $s = (int)\mod_rollcall\local\session_manager::create((int)$roll->id, 0, 'S', 1000, 3600)->get('id');
+        \mod_rollcall\local\attendance_manager::set($s, $statusid, [(int)$user->id]);
+        \mod_rollcall\local\grades::sync($cm, 0, 5000);
+        $grade = fn() => grade_get_grades($course->id, 'mod', 'rollcall', $roll->id, $user->id)->items[0]->grades[$user->id]->grade;
+        $this->assertEqualsWithDelta(10.0, (float)$grade(), 0.0001);
+
+        // Resetting something else keeps the grades.
+        rollcall_reset_userdata((object)['courseid' => $course->id, 'reset_rollcall_classifications' => 1]);
+        $this->assertEqualsWithDelta(10.0, (float)$grade(), 0.0001);
+        $this->assertSame(5000, (int)$DB->get_field('rollcall', 'gradessynced', ['id' => $roll->id]));
+
+        // Without the attendance the grades mean nothing.
+        rollcall_reset_userdata((object)['courseid' => $course->id, 'reset_rollcall_attendance' => 1]);
+        $this->assertNull($grade());
+        $this->assertSame(0, (int)$DB->get_field('rollcall', 'gradessynced', ['id' => $roll->id]));
+        $item = \grade_item::fetch(['itemtype' => 'mod', 'itemmodule' => 'rollcall', 'iteminstance' => $roll->id,
+            'courseid' => $course->id]);
+        $this->assertSame(GRADE_TYPE_VALUE, (int)$item->gradetype);
+    }
 }

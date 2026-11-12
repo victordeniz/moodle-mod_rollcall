@@ -201,6 +201,23 @@ function rollcall_reset_course_form_defaults($course) {
 }
 
 /**
+ * Removes the grades of every roll of a course from the gradebook.
+ *
+ * Called by the core when the gradebook is reset, and by this module when the attendance is.
+ *
+ * @param int $courseid
+ * @param string $type Not used
+ */
+function rollcall_reset_gradebook($courseid, $type = ''): void {
+    global $DB;
+
+    foreach ($DB->get_records('rollcall', ['course' => $courseid]) as $rollcall) {
+        rollcall_grade_item_update($rollcall, 'reset');
+    }
+    $DB->set_field('rollcall', 'gradessynced', 0, ['course' => $courseid]);
+}
+
+/**
  * Deletes the course classifications, attendance and sessions when requested by the course reset.
  *
  * @param stdClass $data The reset form data
@@ -208,6 +225,11 @@ function rollcall_reset_course_form_defaults($course) {
  */
 function rollcall_reset_userdata($data) {
     $status = [];
+    // Without the attendance the grades mean nothing; the core resets them itself when asked to.
+    if ((!empty($data->reset_rollcall_attendance) || !empty($data->reset_rollcall_sessions))
+            && empty($data->reset_gradebook_grades)) {
+        rollcall_reset_gradebook((int)$data->courseid);
+    }
     if (!empty($data->reset_rollcall_classifications)) {
         \mod_rollcall\local\classification::delete_for_course((int)$data->courseid);
         $status[] = [
