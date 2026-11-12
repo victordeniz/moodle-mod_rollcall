@@ -82,13 +82,22 @@ final class take_page_test extends \advanced_testcase {
     /**
      * Returns the exported data of a page.
      *
-     * @param array $args Overrides: filter, sort, dir, page, perpage
+     * @param array $args Overrides: filter, sort, dir, page, perpage, paged
      * @return array
      */
     private function export(array $args = []): array {
         global $PAGE;
-        $args += ['filter' => 'all', 'sort' => 'lastname', 'dir' => 'asc', 'page' => 0, 'perpage' => 2];
-        $page = new take_page($this->cm, $this->session, $args['filter'], $args['sort'], $args['dir'], $args['page'], $args['perpage']);
+        $args += ['filter' => 'all', 'sort' => 'lastname', 'dir' => 'asc', 'page' => 0, 'perpage' => 2, 'paged' => false];
+        $page = new take_page(
+            $this->cm,
+            $this->session,
+            $args['filter'],
+            $args['sort'],
+            $args['dir'],
+            $args['page'],
+            $args['perpage'],
+            $args['paged'],
+        );
         return $page->export_for_template($PAGE->get_renderer('core'));
     }
 
@@ -106,18 +115,18 @@ final class take_page_test extends \advanced_testcase {
      * Tests the rows, filter, sort and paging.
      */
     public function test_rows_filter_sort_and_paging(): void {
-        $this->assertSame(['Eve', 'Dan'], $this->names($this->export()));
-        $this->assertSame(['Ann', 'Cid'], $this->names($this->export(['dir' => 'desc'])));
-        $this->assertSame(['Ann', 'Bob'], $this->names($this->export(['sort' => 'firstname'])));
+        $this->assertSame(['Eve', 'Dan'], $this->names($this->export(['paged' => true])));
+        $this->assertSame(['Ann', 'Cid'], $this->names($this->export(['paged' => true, 'dir' => 'desc'])));
+        $this->assertSame(['Ann', 'Bob'], $this->names($this->export(['paged' => true, 'sort' => 'firstname'])));
 
-        $filtered = $this->export(['filter' => (string)$this->categoryc->get('id')]);
+        $filtered = $this->export(['paged' => true, 'filter' => (string)$this->categoryc->get('id')]);
         $this->assertSame(['Dan', 'Ann'], $this->names($filtered));
         $this->assertTrue($filtered['rows'][0]['hascategory']);
         $this->assertSame('C', $filtered['rows'][0]['categoryname']);
         $this->assertSame('amber', $filtered['rows'][0]['color']);
         $this->assertStringNotContainsString('page=', $filtered['pagingbar']);
 
-        $last = $this->export(['page' => 99]);
+        $last = $this->export(['paged' => true, 'page' => 99]);
         $this->assertCount(1, $last['rows']);
         $this->assertSame(['Ann'], $this->names($last));
         $this->assertStringContainsString('filter=', $last['pagingbar']);
@@ -127,6 +136,59 @@ final class take_page_test extends \advanced_testcase {
         $this->assertSame((int)$this->session->get('id'), $last['sessionid']);
         $this->assertTrue($last['hasstatuses']);
         $this->assertFalse($last['empty']);
+    }
+
+    /**
+     * Tests every student is shown unless paging is requested.
+     */
+    public function test_shows_all_by_default(): void {
+        // The page number is ignored.
+        $data = $this->export(['page' => 3]);
+        $this->assertSame(['Eve', 'Dan', 'Bob', 'Cid', 'Ann'], $this->names($data));
+        $this->assertFalse($data['paged']);
+        $this->assertSame('', $data['pagingbar']);
+        $this->assertSame('Paginate (2 per page)', $data['modelabel']);
+        $this->assertStringContainsString('sessionid=' . $this->session->get('id'), $data['modeurl']);
+        $this->assertStringContainsString('paged=1', $data['modeurl']);
+        $this->assertStringNotContainsString('page=', $data['modeurl']);
+        foreach ($data['sortlinks'] as $link) {
+            $this->assertStringNotContainsString('paged=', $link['url']);
+        }
+
+        // Filter and sort still apply, and the link keeps them.
+        $sorted = $this->export(['sort' => 'firstname', 'dir' => 'desc']);
+        $this->assertSame(['Eve', 'Dan', 'Cid', 'Bob', 'Ann'], $this->names($sorted));
+        $this->assertStringContainsString('sort=firstname', $sorted['modeurl']);
+        $this->assertStringContainsString('dir=desc', $sorted['modeurl']);
+
+        // Paging is not offered when everybody fits in one page.
+        $this->assertNull($this->export(['perpage' => 5])['modeurl']);
+        $this->assertNull($this->export(['perpage' => 5])['modelabel']);
+        $filtered = $this->export(['filter' => (string)$this->categoryc->get('id')]);
+        $this->assertSame(['Dan', 'Ann'], $this->names($filtered));
+        $this->assertNull($filtered['modeurl']);
+    }
+
+    /**
+     * Tests the paged mode is kept by the links and can be left.
+     */
+    public function test_paged_mode(): void {
+        $data = $this->export(['paged' => true, 'page' => 1]);
+        $this->assertSame(['Bob', 'Cid'], $this->names($data));
+        $this->assertTrue($data['paged']);
+        $this->assertStringContainsString('paged=1', $data['pagingbar']);
+        foreach ($data['sortlinks'] as $link) {
+            $this->assertStringContainsString('paged=1', $link['url']);
+        }
+        $this->assertSame('Show all (5)', $data['modelabel']);
+        $this->assertStringNotContainsString('paged', $data['modeurl']);
+        $this->assertStringNotContainsString('page=', $data['modeurl']);
+
+        // The way out is offered even when the filtered students fit in one page.
+        $categoryid = (string)$this->categoryc->get('id');
+        $filtered = $this->export(['paged' => true, 'filter' => $categoryid]);
+        $this->assertSame('Show all (2)', $filtered['modelabel']);
+        $this->assertStringContainsString('filter=' . $categoryid, $filtered['modeurl']);
     }
 
     /**
