@@ -28,6 +28,28 @@ namespace mod_rollcall\local;
  */
 class grades {
     /**
+     * Sends the grades of every listed student because a user asked for it.
+     *
+     * The user needs the capability to update the grades and the roll needs a grade.
+     *
+     * @param \cm_info $cm The roll
+     * @return int|false Number of students processed; false when the gradebook did not take every grade
+     * @throws \required_capability_exception Without the capability
+     * @throws \moodle_exception When the roll has no grade
+     */
+    public static function request_update(\cm_info $cm): int|false {
+        global $DB;
+
+        require_capability('mod/rollcall:updategrades', $cm->context);
+        if ((int)$DB->get_field('rollcall', 'grade', ['id' => $cm->instance], MUST_EXIST) <= 0) {
+            throw new \moodle_exception('nogradeinactivity', 'mod_rollcall');
+        }
+        // A large roll may need longer than the default time of a request.
+        \core_php_time_limit::raise();
+        return self::sync($cm);
+    }
+
+    /**
      * Calculates the grades of the listed students and sends them to the gradebook.
      *
      * A student without past sessions gets no grade. Students who are no longer listed keep the grade they had.
@@ -52,10 +74,10 @@ class grades {
             return 0;
         }
 
-        $userids = array_map('intval', array_keys(roster::get_students($cm, 0)));
-        if ($userid > 0) {
-            $userids = array_values(array_intersect($userids, [$userid]));
-        }
+        // One student is checked against the roster without loading everybody.
+        $userids = $userid > 0
+            ? roster::filter_listed($cm, [$userid], 0)
+            : array_map('intval', array_keys(roster::get_students($cm, 0)));
 
         $grades = [];
         foreach (report::summarise($cm, $userids, $now) as $id => $summary) {

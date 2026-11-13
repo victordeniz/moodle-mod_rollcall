@@ -207,4 +207,43 @@ final class grades_test extends \advanced_testcase {
         $cmrecord = get_coursemodule_from_instance('rollcall', $this->cm->instance);
         $this->assertFalse(rollcall_rescale_activity_grades($this->course, $cmrecord, 0, 10, 0, 10));
     }
+
+    /**
+     * Tests the update a teacher asks for needs the capability.
+     */
+    public function test_request_update_needs_the_capability(): void {
+        global $DB;
+        $this->setUser($this->one);
+        try {
+            grades::request_update($this->cm);
+            $this->fail('A student cannot update the grades');
+        } catch (\required_capability_exception $e) {
+            $this->assertStringContainsString(get_string('rollcall:updategrades', 'mod_rollcall'), $e->getMessage());
+        }
+        $this->assertNull($this->grade((int)$this->one->id));
+        $this->assertSame(0, (int)$DB->get_field('rollcall', 'gradessynced', ['id' => $this->cm->instance]));
+    }
+
+    /**
+     * Tests the update a teacher asks for is refused in a roll without a grade.
+     */
+    public function test_request_update_needs_a_grade(): void {
+        $plain = $this->getDataGenerator()->create_module('rollcall', ['course' => $this->course->id]);
+        $cm = get_fast_modinfo($this->course)->get_cm($plain->cmid);
+        $this->expectException(\moodle_exception::class);
+        $this->expectExceptionMessage(get_string('nogradeinactivity', 'mod_rollcall'));
+        grades::request_update($cm);
+    }
+
+    /**
+     * Tests the update a teacher asks for sends the grades of every listed student.
+     */
+    public function test_request_update_sends_every_grade(): void {
+        global $DB;
+        $teacher = $this->getDataGenerator()->create_and_enrol($this->course, 'teacher');
+        $this->setUser($teacher);
+        $this->assertSame(3, grades::request_update($this->cm));
+        $this->assertEqualsWithDelta(8.33333, $this->grade((int)$this->one->id), 0.0001);
+        $this->assertGreaterThan(0, (int)$DB->get_field('rollcall', 'gradessynced', ['id' => $this->cm->instance]));
+    }
 }

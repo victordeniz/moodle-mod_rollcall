@@ -217,6 +217,8 @@ final class lib_test extends \advanced_testcase {
         $this->assertTrue(rollcall_supports(FEATURE_GROUPS));
         $this->assertTrue(rollcall_supports(FEATURE_BACKUP_MOODLE2));
         $this->assertTrue(rollcall_supports(FEATURE_GRADE_HAS_GRADE));
+        // The roll does not grade outcomes.
+        $this->assertFalse(rollcall_supports(FEATURE_GRADE_OUTCOMES));
         $this->assertFalse(rollcall_supports(FEATURE_COMPLETION_TRACKS_VIEWS));
         $this->assertNull(rollcall_supports(FEATURE_RATE));
     }

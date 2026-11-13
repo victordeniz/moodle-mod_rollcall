@@ -57,11 +57,7 @@ if (!in_array($action, ['', 'delete', 'updategrades'], true)) {
 if ($action === 'updategrades') {
     // The grades reach the gradebook only on request: every listed student is calculated again.
     require_sesskey();
-    require_capability('mod/rollcall:updategrades', $context);
-    if ((int)$roll->grade <= 0) {
-        throw new moodle_exception('nogradeinactivity', 'mod_rollcall');
-    }
-    $count = grades::sync($cm);
+    $count = grades::request_update($cm);
     $group = optional_param('group', 0, PARAM_INT);
     $backurl = new moodle_url($url, $group > 0 ? ['group' => $group] : []);
     if ($count === false) {
