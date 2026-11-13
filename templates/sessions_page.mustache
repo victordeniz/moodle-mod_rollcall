@@ -21,12 +21,16 @@
 
     Context variables required for this template:
     * addurl - URL to create a session, null if the user cannot
+    * grades - {actionurl, id, group, sesskey, synced} to send the grades to the gradebook, null if the roll has no
+      grade or the user cannot; synced is the time they were last sent, null for never
     * hasrows - whether there are sessions
     * rows - list of {name, date, duration, group, highlight, takeurl, editurl, deleteurl}
 
     Example context (json):
     {
         "addurl": "https://example.com/mod/rollcall/editsession.php?id=1",
+        "grades": {"actionurl": "https://example.com/mod/rollcall/view.php", "id": 1, "group": 0, "sesskey": "abc",
+            "synced": "10 November 2026, 12:40"},
         "hasrows": true,
         "rows": [
             {"name": "Session 06/11/26", "date": "6 November 2026, 10:00", "duration": "1 hour", "group": "G1",
@@ -37,6 +41,19 @@
     }
 }}
 <div class="mod_rollcall-sessions">
+    {{#grades}}
+    <form method="post" action="{{actionurl}}" class="mb-3" data-region="mod_rollcall-grades">
+        <input type="hidden" name="id" value="{{id}}">
+        <input type="hidden" name="group" value="{{group}}">
+        <input type="hidden" name="action" value="updategrades">
+        <input type="hidden" name="sesskey" value="{{sesskey}}">
+        <p class="mb-2">
+            {{#synced}}{{#str}}gradeslastsynced, mod_rollcall, {{synced}}{{/str}}{{/synced}}
+            {{^synced}}{{#str}}gradesneversynced, mod_rollcall{{/str}}{{/synced}}
+        </p>
+        <button type="submit" class="btn btn-secondary">{{#str}}updategrades, mod_rollcall{{/str}}</button>
+    </form>
+    {{/grades}}
     {{#hasrows}}
     <table class="table generaltable">
         <thead>

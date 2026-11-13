@@ -54,6 +54,10 @@ class restore_rollcall_activity_structure_step extends restore_activity_structur
         global $DB;
         $data = (object)$data;
         $data->course = $this->get_courseid();
+        // Backups made before the roll had a grade restore a roll without one.
+        $data->grade = (int)($data->grade ?? 0);
+        // The grades come with the user data: without it none has been sent yet.
+        $data->gradessynced = $this->get_setting_value('userinfo') ? (int)($data->gradessynced ?? 0) : 0;
         $newitemid = $DB->insert_record('rollcall', $data);
         $this->apply_activity_instance($newitemid);
     }

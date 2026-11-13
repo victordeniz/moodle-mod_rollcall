@@ -91,6 +91,17 @@ $capabilities = [
         ],
     ],
 
+    // Send the attendance grades to the gradebook.
+    'mod/rollcall:updategrades' => [
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => [
+            'teacher' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+
     // View the attendance report.
     'mod/rollcall:viewreport' => [
         'riskbitmask' => RISK_PERSONAL,

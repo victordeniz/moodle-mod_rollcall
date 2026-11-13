@@ -50,6 +50,8 @@ class sessions_page implements \renderable, \templatable {
      * @return array
      */
     public function export_for_template(\renderer_base $output): array {
+        global $DB;
+
         $cm = $this->cm;
         $context = $cm->context;
         $groups = groups_get_all_groups($cm->course);
@@ -91,7 +93,23 @@ class sessions_page implements \renderable, \templatable {
             ];
         }
 
+        // The grades are sent to the gradebook on request, by those who can, when the roll has a grade.
+        $grades = null;
+        if (has_capability('mod/rollcall:updategrades', $context)) {
+            $roll = $DB->get_record('rollcall', ['id' => $cm->instance], 'id, grade, gradessynced', MUST_EXIST);
+            if ((int)$roll->grade > 0) {
+                $grades = [
+                    'actionurl' => (new \moodle_url('/mod/rollcall/view.php'))->out(false),
+                    'id' => (int)$cm->id,
+                    'group' => $this->groupid,
+                    'sesskey' => sesskey(),
+                    'synced' => (int)$roll->gradessynced > 0 ? userdate((int)$roll->gradessynced, $dateformat) : null,
+                ];
+            }
+        }
+
         return [
+            'grades' => $grades,
             'rows' => $rows,
             'hasrows' => !empty($rows),
             'addurl' => session_manager::can_create($cm) ? (new \moodle_url('/mod/rollcall/editsession.php', [

@@ -109,5 +109,19 @@ function xmldb_rollcall_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2026110900, 'rollcall');
     }
 
+    if ($oldversion < 2026111200) {
+        // Optional grade of the activity, and the time its grades were last sent to the gradebook.
+        $table = new xmldb_table('rollcall');
+        $field = new xmldb_field('grade', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'introformat');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        $field = new xmldb_field('gradessynced', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'grade');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        upgrade_mod_savepoint(true, 2026111200, 'rollcall');
+    }
+
     return true;
 }

@@ -1,0 +1,100 @@
+<?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+namespace mod_rollcall\local;
+
+/**
+ * Sends the attendance of the students to the gradebook.
+ *
+ * The grade of a student is the percentage of the attendance report over the maximum grade of the roll.
+ * Nothing is sent automatically: the grades change only when this class is asked to send them.
+ *
+ * @package    mod_rollcall
+ * @copyright  2026 Victor Deniz <fitodeniz@gmail.com>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class grades {
+    /**
+     * Sends the grades of every listed student because a user asked for it.
+     *
+     * The user needs the capability to update the grades and the roll needs a grade.
+     *
+     * @param \cm_info $cm The roll
+     * @return int|false Number of students processed; false when the gradebook did not take every grade
+     * @throws \required_capability_exception Without the capability
+     * @throws \moodle_exception When the roll has no grade
+     */
+    public static function request_update(\cm_info $cm): int|false {
+        global $DB;
+
+        require_capability('mod/rollcall:updategrades', $cm->context);
+        if ((int)$DB->get_field('rollcall', 'grade', ['id' => $cm->instance], MUST_EXIST) <= 0) {
+            throw new \moodle_exception('nogradeinactivity', 'mod_rollcall');
+        }
+        // A large roll may need longer than the default time of a request.
+        \core_php_time_limit::raise();
+        return self::sync($cm);
+    }
+
+    /**
+     * Calculates the grades of the listed students and sends them to the gradebook.
+     *
+     * A student without past sessions gets no grade. Students who are no longer listed keep the grade they had.
+     * The time of the update is stored only when every student is updated.
+     *
+     * The gradebook refuses the grades of a locked item, and those of the students whose grade is locked:
+     * that is reported as a failure and the time of the update is left alone.
+     *
+     * @param \cm_info $cm The roll
+     * @param int $userid Only this student, or 0 for every listed student
+     * @param int|null $now Current time, for the past sessions and the time of the update
+     * @return int|false Number of students processed, 0 when the roll has no grade; false when the gradebook
+     *     did not take every grade
+     */
+    public static function sync(\cm_info $cm, int $userid = 0, ?int $now = null): int|false {
+        global $CFG, $DB;
+        require_once($CFG->dirroot . '/mod/rollcall/lib.php');
+
+        $now ??= time();
+        $rollcall = $DB->get_record('rollcall', ['id' => $cm->instance], '*', MUST_EXIST);
+        if ((int)$rollcall->grade <= 0) {
+            return 0;
+        }
+
+        // One student is checked against the roster without loading everybody.
+        $userids = $userid > 0
+            ? roster::filter_listed($cm, [$userid], 0)
+            : array_map('intval', array_keys(roster::get_students($cm, 0)));
+
+        $grades = [];
+        foreach (report::summarise($cm, $userids, $now) as $id => $summary) {
+            $grades[$id] = [
+                'userid' => $id,
+                'rawgrade' => $summary->percent === null ? null : (int)$rollcall->grade * $summary->percent / 100,
+            ];
+        }
+        $rollcall->cmidnumber = $cm->idnumber;
+        // Without students the item is still brought up to date.
+        if (rollcall_grade_item_update($rollcall, $grades ?: null) !== GRADE_UPDATE_OK) {
+            return false;
+        }
+
+        if ($userid === 0) {
+            $DB->set_field('rollcall', 'gradessynced', $now, ['id' => $rollcall->id]);
+        }
+        return count($userids);
+    }
+}

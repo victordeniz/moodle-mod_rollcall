@@ -83,6 +83,7 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         $this->assertContains('rollcall_usercat', $tables);
         $this->assertContains('rollcall_category', $tables);
         $this->assertContains('rollcall_attendance', $tables);
+        $this->assertContains('core_grades', $tables);
         foreach ($collection->get_collection() as $item) {
             if ($item->get_name() === 'rollcall_attendance') {
                 $fields = array_keys($item->get_privacy_fields());
