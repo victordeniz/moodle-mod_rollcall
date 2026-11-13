@@ -264,6 +264,8 @@ dl.faq dd { margin: 4px 0 0; }
     <li>El botón recalcula a todos los alumnos de la actividad, sea cual sea el grupo que esté viendo.</li>
     <li>Si cambia la calificación máxima en la configuración, las notas se vuelven a enviar sobre el máximo nuevo.</li>
     <li>Si corrige a mano la nota de un alumno en el libro de calificaciones, el botón no la cambia.</li>
+    <li>Si bloquea la columna o la nota de un alumno en el libro de calificaciones, el botón avisa de que no ha podido actualizar las calificaciones. Desbloquéela y vuelva a pulsarlo.</li>
+    <li>Moodle también vuelve a enviar las notas por su cuenta en unos pocos casos: al cambiar el nombre de la actividad, al duplicarla y al reiniciar o recalcular el libro de calificaciones. El resultado es el mismo que al pulsar el botón.</li>
     <li>Cada alumno ve su nota de asistencia en su informe de calificaciones, como la de cualquier otra actividad. Si no quiere que la vean, oculte la columna en el libro.</li>
 </ul>
 
@@ -312,7 +314,7 @@ dl.faq dd { margin: 4px 0 0; }
             <li>borrar la asistencia registrada (se conservan las sesiones);</li>
             <li>borrar todas las sesiones.</li>
         </ul>
-        <p>Los estados no se tocan. Si se borra la asistencia o las sesiones, también se vacían las notas de la actividad en el libro de calificaciones.</p>
+        <p>Los estados no se tocan. Si se borra la asistencia o las sesiones, también se vacían las notas de la actividad en el libro de calificaciones. Si conserva las sesiones y hay alumnos que siguen matriculados, pueden quedar con un 0, igual que en el informe.</p>
     </li>
 </ul>
 

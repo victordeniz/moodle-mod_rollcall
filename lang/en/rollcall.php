@@ -79,6 +79,7 @@ $string['filter'] = 'Show';
 $string['filterall'] = 'All students';
 $string['gradeslastsynced'] = 'Grades last sent to the gradebook: {$a}';
 $string['gradesneversynced'] = 'The grades have not been sent to the gradebook yet.';
+$string['gradesnotupdated'] = 'The grades could not be updated: the grade item of this activity, or the grade of some student, is locked in the gradebook. Unlock it there and try again.';
 $string['gradesupdated'] = 'Grades updated: {$a} students';
 $string['invalidcategory'] = 'Invalid category.';
 $string['invalidcolor'] = 'The colour is not in the palette.';

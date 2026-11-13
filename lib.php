@@ -170,12 +170,11 @@ function rollcall_update_grades(stdClass $rollcall, int $userid = 0, bool $nulli
  * @param float $oldmax
  * @param float $newmin
  * @param float $newmax
- * @return bool Always true
+ * @return bool False when the gradebook did not take the grades (locked item or grades)
  */
 function rollcall_rescale_activity_grades($course, $cm, $oldmin, $oldmax, $newmin, $newmax): bool {
     $cm = get_fast_modinfo($course)->get_cm($cm->id);
-    \mod_rollcall\local\grades::sync($cm);
-    return true;
+    return \mod_rollcall\local\grades::sync($cm) !== false;
 }
 
 /**
@@ -225,7 +224,8 @@ function rollcall_reset_gradebook($courseid, $type = ''): void {
  */
 function rollcall_reset_userdata($data) {
     $status = [];
-    // Without the attendance the grades mean nothing; the core resets them itself when asked to.
+    // Without the attendance the grades mean nothing. When the core resets the gradebook too it deletes them
+    // itself and then asks every roll for its grades again, so they end up as the report would give them now.
     if ((!empty($data->reset_rollcall_attendance) || !empty($data->reset_rollcall_sessions))
             && empty($data->reset_gradebook_grades)) {
         rollcall_reset_gradebook((int)$data->courseid);

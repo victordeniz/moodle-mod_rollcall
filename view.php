@@ -63,12 +63,12 @@ if ($action === 'updategrades') {
     }
     $count = grades::sync($cm);
     $group = optional_param('group', 0, PARAM_INT);
-    redirect(
-        new moodle_url($url, $group > 0 ? ['group' => $group] : []),
-        get_string('gradesupdated', 'mod_rollcall', $count),
-        null,
-        notification::NOTIFY_SUCCESS
-    );
+    $backurl = new moodle_url($url, $group > 0 ? ['group' => $group] : []);
+    if ($count === false) {
+        // The gradebook refused: nothing is claimed and the time of the last update stays.
+        redirect($backurl, get_string('gradesnotupdated', 'mod_rollcall'), null, notification::NOTIFY_ERROR);
+    }
+    redirect($backurl, get_string('gradesupdated', 'mod_rollcall', $count), null, notification::NOTIFY_SUCCESS);
 }
 if ($action === 'delete') {
     require_sesskey();

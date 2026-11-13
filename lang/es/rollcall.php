@@ -79,6 +79,7 @@ $string['filter'] = 'Mostrar';
 $string['filterall'] = 'Todos los alumnos';
 $string['gradeslastsynced'] = 'Calificaciones enviadas por última vez: {$a}';
 $string['gradesneversynced'] = 'Las calificaciones aún no se han enviado al libro de calificaciones.';
+$string['gradesnotupdated'] = 'No se han podido actualizar las calificaciones: el elemento de calificación de esta actividad, o la calificación de algún alumno, está bloqueado en el libro de calificaciones. Desbloquéelo allí y vuelva a intentarlo.';
 $string['gradesupdated'] = 'Calificaciones actualizadas: {$a} alumnos';
 $string['invalidcategory'] = 'Categoría no válida.';
 $string['invalidcolor'] = 'El color no está en la paleta.';

@@ -33,12 +33,16 @@ class grades {
      * A student without past sessions gets no grade. Students who are no longer listed keep the grade they had.
      * The time of the update is stored only when every student is updated.
      *
+     * The gradebook refuses the grades of a locked item, and those of the students whose grade is locked:
+     * that is reported as a failure and the time of the update is left alone.
+     *
      * @param \cm_info $cm The roll
      * @param int $userid Only this student, or 0 for every listed student
      * @param int|null $now Current time, for the past sessions and the time of the update
-     * @return int Number of students processed; 0 when the roll has no grade
+     * @return int|false Number of students processed, 0 when the roll has no grade; false when the gradebook
+     *     did not take every grade
      */
-    public static function sync(\cm_info $cm, int $userid = 0, ?int $now = null): int {
+    public static function sync(\cm_info $cm, int $userid = 0, ?int $now = null): int|false {
         global $CFG, $DB;
         require_once($CFG->dirroot . '/mod/rollcall/lib.php');
 
@@ -62,7 +66,9 @@ class grades {
         }
         $rollcall->cmidnumber = $cm->idnumber;
         // Without students the item is still brought up to date.
-        rollcall_grade_item_update($rollcall, $grades ?: null);
+        if (rollcall_grade_item_update($rollcall, $grades ?: null) !== GRADE_UPDATE_OK) {
+            return false;
+        }
 
         if ($userid === 0) {
             $DB->set_field('rollcall', 'gradessynced', $now, ['id' => $rollcall->id]);

@@ -187,4 +187,24 @@ final class grades_test extends \advanced_testcase {
         $this->assertTrue(rollcall_rescale_activity_grades($this->course, $cmrecord, 0, 10, 0, 20));
         $this->assertEqualsWithDelta(16.66667, $this->grade((int)$this->one->id), 0.0001);
     }
+
+    /**
+     * Tests a gradebook that refuses the grades is reported, not counted as an update.
+     */
+    public function test_locked_item_is_reported(): void {
+        global $DB;
+        $this->assertSame(3, grades::sync($this->cm, 0, 5000));
+        $item = \grade_item::fetch(['itemtype' => 'mod', 'itemmodule' => 'rollcall',
+            'iteminstance' => $this->cm->instance, 'courseid' => $this->course->id]);
+        $item->set_locked(1);
+
+        attendance_manager::set($this->sessionids[1], (int)$this->statusp->get('id'), [(int)$this->two->id]);
+        $this->assertFalse(grades::sync($this->cm, 0, 6000));
+        $this->assertEqualsWithDelta(3.33333, $this->grade((int)$this->two->id), 0.0001);
+        $this->assertSame(5000, (int)$DB->get_field('rollcall', 'gradessynced', ['id' => $this->cm->instance]));
+
+        // The core is told that the grades could not be sent again over a new maximum.
+        $cmrecord = get_coursemodule_from_instance('rollcall', $this->cm->instance);
+        $this->assertFalse(rollcall_rescale_activity_grades($this->course, $cmrecord, 0, 10, 0, 10));
+    }
 }

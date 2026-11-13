@@ -310,4 +310,39 @@ final class lib_test extends \advanced_testcase {
             'courseid' => $course->id]);
         $this->assertSame(GRADE_TYPE_VALUE, (int)$item->gradetype);
     }
+
+    /**
+     * Tests what the gradebook holds when the core resets it too and asks the rolls for their grades again.
+     */
+    public function test_course_reset_with_core_gradebook_reset(): void {
+        global $CFG, $DB;
+        require_once($CFG->libdir . '/gradelib.php');
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $gen = $this->getDataGenerator();
+        $course = $gen->create_course();
+        $roll = $gen->create_module('rollcall', ['course' => $course->id, 'grade' => 10]);
+        $cm = get_fast_modinfo($course)->get_cm($roll->cmid);
+        $user = $gen->create_and_enrol($course, 'student');
+        $statusid = (int)array_values(\mod_rollcall\local\status_manager::get_all((int)$roll->id))[0]->get('id');
+        $s = (int)\mod_rollcall\local\session_manager::create((int)$roll->id, 0, 'S', 1000, 3600)->get('id');
+        \mod_rollcall\local\attendance_manager::set($s, $statusid, [(int)$user->id]);
+        \mod_rollcall\local\grades::sync($cm, 0, 5000);
+        $grade = fn() => grade_get_grades($course->id, 'mod', 'rollcall', $roll->id, $user->id)->items[0]->grades[$user->id]->grade;
+
+        // The attendance goes but the past session stays: the core fetches the grades again, and a student who is
+        // still enrolled gets what the report says, a 0.
+        rollcall_reset_userdata((object)['courseid' => $course->id, 'reset_rollcall_attendance' => 1,
+            'reset_gradebook_grades' => 1]);
+        grade_course_reset($course->id);
+        $this->assertEqualsWithDelta(0.0, (float)$grade(), 0.0001);
+        $this->assertNotNull($grade());
+
+        // Without sessions nobody has a grade.
+        rollcall_reset_userdata((object)['courseid' => $course->id, 'reset_rollcall_sessions' => 1,
+            'reset_gradebook_grades' => 1]);
+        grade_course_reset($course->id);
+        $this->assertNull($grade());
+    }
 }
